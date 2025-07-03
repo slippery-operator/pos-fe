@@ -1,0 +1,9 @@
+/* Apply to all first-column cells */
+.table td:first-child,
+.table th:first-child {
+  padding-left: 1.5rem; /* or 1.5rem / 24px etc */
+}
+.name-cell .edit-container input {
+  min-width: 100%;
+  max-width: 100%;
+}

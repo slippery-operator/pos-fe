@@ -1,0 +1,53 @@
+<!-- Bootstrap 5 Modal -->
+<div class="modal fade" [class.show]="show" [style.display]="show ? 'block' : 'none'" 
+     tabindex="-1" role="dialog" aria-labelledby="addClientModalLabel" aria-hidden="!show">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addClientModalLabel">Add New Client</h5>
+        
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="clientName" class="form-label fw-semibold">Client Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [class.is-invalid]="showError"
+            id="clientName" 
+            [(ngModel)]="clientName"
+            (input)="validateName()" 
+            maxlength="255"
+            placeholder="Enter client name">
+          
+          <!-- Bootstrap Invalid Feedback -->
+          <div class="invalid-feedback" *ngIf="showError">
+            {{ errorMessage }}
+          </div>
+          
+          <!-- Character count warning using Bootstrap text classes -->
+          <div class="form-text" *ngIf="clientName.length > 200 && clientName.length <= 255">
+            <span class="text-warning fw-medium">
+              {{ clientName.length }}/255 characters
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="closeModal()">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary btn-sm"
+          [disabled]="!isValidName()"
+          (click)="onSubmit()">
+          Add Client
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap 5 Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="show" *ngIf="show" (click)="closeModal()"></div>

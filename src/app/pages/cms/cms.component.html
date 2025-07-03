@@ -1,0 +1,106 @@
+<div class="container-fluid px-5 py-5">
+  <div class="row d-flex align-items-center">
+    <div class="col-9 d-flex justify-content-start">
+      <h2 class="fs-4">Client Management System</h2>
+    </div>
+    <div class="col d-flex justify-content-end fs-4">
+      <button class="btn btn-primary btn-sm" (click)="showModal = true">
+        <i class="bi bi-plus-circle me-2"></i>
+        Add Client
+      </button>
+    </div>
+    
+    <!-- Bootstrap Alert for errors -->
+    <div class="alert alert-danger alert-dismissible fade show" *ngIf="error" role="alert">
+      {{ error }}
+      <button type="button" class="btn-close" (click)="error = ''" aria-label="Close"></button>
+    </div>
+  </div>
+
+  <div class="row mt-4 fs-6">
+    <!-- No clients message -->
+    <div *ngIf="!loading && clients.length === 0" class="text-center p-4">
+      <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        No clients found. Click "Add Client" to get started.
+      </div>
+    </div>
+
+    <!-- Clients table -->
+    <div class="table-responsive" *ngIf="!loading && clients.length > 0">
+      <table class="table table-hover table-borderless text-start">
+        <thead class="table-primary">
+          <tr>
+            <th scope="col" style="width: 10%" class="ps-4">ID</th>
+            <th scope="col" style="width: 70%">Name</th>
+            <th scope="col" style="width: 20%">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="border-top">
+          <tr *ngFor="let client of clients" class="align-middle">
+            <td class="ps-4">{{ client.clientId }}</td>
+            <td>
+              <!-- Display mode -->
+              <span *ngIf="!isEditing(client.clientId)">{{ client.name }}</span>
+              
+              <!-- Edit mode -->
+              <div *ngIf="isEditing(client.clientId)" class="w-100">
+                <input 
+                  type="text" 
+                  class="form-control form-control-sm w-100" 
+                  [class.is-invalid]="editingErrors[client.clientId]"
+                  [(ngModel)]="editingName[client.clientId]"
+                  maxlength="255"
+                  (keyup.enter)="saveEdit(client)"
+                  (keyup.escape)="cancelEdit(client.clientId)"
+                  (input)="validateEditingName(client.clientId)">
+                
+                <!-- Bootstrap validation feedback -->
+                <div class="invalid-feedback" *ngIf="editingErrors[client.clientId]">
+                  {{ editingErrors[client.clientId] }}
+                </div>
+                
+                <!-- Character count using Bootstrap text utilities -->
+                <div class="form-text" *ngIf="editingName[client.clientId] && editingName[client.clientId].length > 200">
+                  <span class="text-warning fw-medium">
+                    {{ editingName[client.clientId].length }}/255 characters
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td class="text-nowrap">
+              <!-- View mode buttons -->
+              <div class="btn-group btn-group-sm" *ngIf="!isEditing(client.clientId)">
+                <button class="btn btn-outline-primary btn-sm" (click)="startEdit(client)">
+                  <i class="bi bi-pencil me-1"></i>
+                  Edit
+                </button>
+              </div>
+              
+              <!-- Edit mode buttons -->
+              <div class="btn-group btn-group-sm" *ngIf="isEditing(client.clientId)">
+                <button 
+                  class="btn btn-outline-success btn-sm" 
+                  (click)="saveEdit(client)" 
+                  [disabled]="!isValidEdit(client.clientId)">
+                  <i class="bi bi-check me-1"></i>
+                  Save
+                </button>
+                <button class="btn btn-outline-danger btn-sm" (click)="cancelEdit(client.clientId)">
+                  <i class="bi bi-x me-1"></i>
+                  Cancel
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal component -->
+  <add-client-modal 
+    [(show)]="showModal" 
+    (clientAdded)="onClientAdded($event)">
+  </add-client-modal>
+</div>
