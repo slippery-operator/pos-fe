@@ -1,0 +1,84 @@
+<!-- Bootstrap 5 Modal -->
+<div class="modal fade" [class.show]="show" [style.display]="show ? 'block' : 'none'" 
+     tabindex="-1" role="dialog" aria-labelledby="uploadInventoryModalLabel" aria-hidden="!show">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadInventoryModalLabel">Upload Inventory</h5>
+        <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="card border-2 border-dashed">
+              <div class="card-body text-center p-4">
+                <i class="bi bi-file-earmark-text text-muted mb-3" style="font-size: 3rem;"></i>
+                <h6 class="card-title">Upload TSV File</h6>
+                <p class="card-text text-muted mb-3">
+                  Select a TSV file containing inventory data to bulk upload inventory records.
+                </p>
+                
+                <div class="mb-3">
+                  <label for="inventoryFile" class="form-label fw-semibold">Select TSV File *</label>
+                  <input 
+                    type="file" 
+                    class="form-control" 
+                    [class.is-invalid]="showError"
+                    id="inventoryFile" 
+                    accept=".tsv,.txt"
+                    (change)="onFileSelected($event)"
+                    [disabled]="uploading">
+                  <div class="invalid-feedback" *ngIf="showError">
+                    {{ errorMessage }}
+                  </div>
+                  <div class="form-text">
+                    Upload a TSV file containing inventory data. The file should have columns for product ID and quantity.
+                  </div>
+                </div>
+
+                <div *ngIf="selectedFile" class="alert alert-info">
+                  <i class="bi bi-file-earmark-check me-2"></i>
+                  Selected file: {{ selectedFile.name }}
+                </div>
+
+                <div class="d-grid gap-2 d-md-block">
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="downloadSampleTsv()">
+                    <i class="bi bi-download me-2"></i>
+                    Download Sample TSV
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="closeModal()" [disabled]="uploading">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary btn-sm"
+          (click)="uploadFile()" 
+          [disabled]="!selectedFile || uploading">
+          <span *ngIf="!uploading">
+            <i class="bi bi-upload me-2"></i>
+            Upload
+          </span>
+          <span *ngIf="uploading">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Uploading...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap 5 Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="show" *ngIf="show" (click)="onBackdropClick($event)"></div> 

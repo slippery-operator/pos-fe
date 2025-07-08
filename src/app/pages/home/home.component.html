@@ -1,30 +1,118 @@
-<div class="container mt-4">
-    <div class="row">
-      <div class="col-12">
-        <h1 class="mb-4">Masters</h1>
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <div class="card h-100">
-              <div class="card-body d-flex flex-column">
-                <h3 class="card-title">
-                  <i class="bi bi-people-fill me-2"></i>
-                  Client Master
-                </h3>
-                <p class="card-text">Manage client information, add new clients, and update existing client details.</p>
-                <div class="mt-auto">
-                  <a routerLink="/cms" class="btn btn-primary">
-                    Manage Clients
-                    <i class="bi bi-arrow-right ms-2"></i>
-                  </a>
-                </div>
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
+  <div class="row">
+    <div class="col-12">
+      <!-- Welcome Section -->
+      <div class="text-center mb-4 mb-lg-5">
+        <h1 class="display-4 fw-bold text-primary mb-3">Welcome to CMS</h1>
+        <p class="lead text-muted">Client Management System - Your comprehensive solution for managing client relationships</p>
+      </div>
+
+      <!-- Features Section -->
+      <div class="row g-3 g-lg-4">
+        <div class="col-lg-4 col-md-6 mb-3 mb-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column p-3 p-lg-4">
+              <div class="text-center mb-3">
+                <i class="bi bi-people-fill text-primary" style="font-size: 3rem;"></i>
+              </div>
+              <h3 class="card-title text-center mb-3">Client Manager</h3>
+              <p class="card-text text-center text-muted">
+                Manage client information, add new clients, update existing details, and maintain comprehensive client records.
+              </p>
+              <div class="mt-auto text-center">
+                <a routerLink="/cms" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right me-2"></i>
+                  Manage Clients
+                </a>
               </div>
             </div>
           </div>
-          <!-- Add more master cards here in the future -->
-          <!-- <div class="alert alert-success">
-            ✅ Bootstrap is working!
-          </div> -->
         </div>
+
+        <div class="col-lg-4 col-md-6 mb-3 mb-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column p-3 p-lg-4">
+              <div class="text-center mb-3">
+                <i class="bi bi-box-seam text-primary" style="font-size: 3rem;"></i>
+              </div>
+              <h3 class="card-title text-center mb-3">Product Manager</h3>
+              <p class="card-text text-center text-muted">
+                Manage product catalog, add products individually or in bulk via TSV upload, and maintain product information.
+              </p>
+              <div class="mt-auto text-center">
+                <a routerLink="/products" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right me-2"></i>
+                  Manage Products
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Future Features -->
+        <div class="col-lg-4 col-md-6 mb-3 mb-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column p-3 p-lg-4">
+              <div class="text-center mb-3">
+                <i class="bi bi-box-seam text-primary" style="font-size: 3rem;"></i>
+              </div>
+              <h3 class="card-title text-center mb-3">Inventory Manager</h3>
+              <p class="card-text text-center text-muted">
+                Manage inventory and maintain comprehensive inventory records.
+              </p>
+              <div class="mt-auto text-center">
+                <a routerLink="/inventory" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right me-2"></i>
+                  Manage Inventory
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- order manager -->
+         <div class="col-lg-4 col-md-6 mb-3 mb-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column p-3 p-lg-4">
+              <div class="text-center mb-3">
+                <i class="bi bi-box-seam text-primary" style="font-size: 3rem;"></i>
+              </div>
+              <h3 class="card-title text-center mb-3">Order Manager</h3>
+              <p class="card-text text-center text-muted">
+                Manage orders and maintain comprehensive order records.
+              </p>
+              <div class="mt-auto text-center">
+                <a routerLink="/orders" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right me-2"></i>
+                  Manage Orders
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- report manager -->
+        <div class="col-lg-4 col-md-6 mb-3 mb-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex flex-column p-3 p-lg-4">
+              <div class="text-center mb-3">
+                <i class="bi bi-box-seam text-primary" style="font-size: 3rem;"></i>
+              </div>
+              <h3 class="card-title text-center mb-3">Report Manager</h3>
+              <p class="card-text text-center text-muted">
+                Manage reports and maintain comprehensive report records.
+              </p>
+              <div class="mt-auto text-center">
+                <a routerLink="/reports" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right me-2"></i>
+                  Manage Reports
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
+</div>

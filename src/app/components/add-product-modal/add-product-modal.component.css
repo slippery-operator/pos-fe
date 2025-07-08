@@ -1,0 +1,44 @@
+/* Custom styles for the add product modal */
+.modal-dialog {
+  max-width: 800px;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+  color: #0d6efd;
+  background-color: transparent;
+  border-bottom: 2px solid #0d6efd;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: transparent;
+  color: #0d6efd;
+}
+
+/* File upload area styling */
+.card.border-dashed:hover {
+  border-color: #0d6efd !important;
+  background-color: #f8f9fa;
+}
+
+/* Form validation styling */
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.invalid-feedback {
+  display: block;
+  font-size: 0.875rem;
+  color: #dc3545;
+} 

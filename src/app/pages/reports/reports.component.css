@@ -1,0 +1,40 @@
+/* Card styling for summary cards */
+.card.border-primary,
+.card.border-success,
+.card.border-warning {
+  transition: transform 0.2s ease-in-out;
+}
+
+.card.border-primary:hover,
+.card.border-success:hover,
+.card.border-warning:hover {
+  transform: translateY(-2px);
+}
+
+/* Icon styling in summary cards */
+.card .bi {
+  opacity: 0.8;
+}
+
+/* Table styling */
+.table th {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Badge styling */
+.badge {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-title {
+    font-size: 1.25rem;
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+} 

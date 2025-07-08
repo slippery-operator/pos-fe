@@ -1,0 +1,122 @@
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
+  <div class="row d-flex align-items-center mb-3">
+    <div class="col-9 col-md-9 d-flex justify-content-start">
+      <h2 class="fs-4 mb-0">Inventory Management</h2>
+    </div>
+    <div class="col col-md-3 d-flex justify-content-start justify-content-md-end fs-4 mt-3 mt-md-0">
+      <button class="btn btn-primary btn-sm w-md-auto" (click)="showUploadModal = true">
+        <i class="bi bi-upload me-2"></i>
+        Upload Inventory
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Panel Component -->
+  <app-search-panel
+    [searchFields]="searchFields"
+    title="Filter by Quantity"
+    [showSearchIcon]="true"
+    searchButtonText="Search"
+    searchButtonSize="sm"
+    (search)="onSearch($event)"
+    (clear)="onClearSearch()">
+  </app-search-panel>
+
+  <!-- Error Display Component -->
+  <app-error-display 
+    [showError]="(error$ | async) ? true : false"
+    [errorMessage]="(error$ | async) || ''"
+    [showRetryButton]="true"
+    (onRetry)="retryLoadInventory()">
+  </app-error-display>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading$ | async" class="text-center py-5">
+    <app-loading-spinner 
+      loadingText="Loading inventory..."
+      size="lg">
+    </app-loading-spinner>
+  </div>
+
+  <!-- Content when not loading -->
+  <div *ngIf="!(loading$ | async)" class="row mt-4 fs-6">
+    <!-- No inventory message -->
+    <div *ngIf="inventory.length === 0" class="text-center p-4">
+      <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        No inventory records found. Click "Upload Inventory" to get started.
+      </div>
+    </div>
+
+    <!-- Inventory table -->
+    <div class="table-responsive" *ngIf="inventory.length > 0">
+      <table class="table table-hover table-borderless text-start">
+        <thead class="table-primary">
+          <tr>
+            <th scope="col" style="width: 70%" class="ps-4">Product Name</th>
+            <th scope="col" style="width: 20%">Quantity</th>
+            <th scope="col" style="width: 10%">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="border-top">
+          <tr *ngFor="let item of inventory" class="align-middle">
+            <td class="ps-4">
+              <span class="fw-medium">{{ getProductName(item.productId) }}</span>
+            </td>
+            <td>
+              <!-- Display mode -->
+              <span *ngIf="!isEditing(item.id)" class="fw-medium">{{ item.quantity }}</span>
+              
+              <!-- Edit mode -->
+              <div *ngIf="isEditing(item.id)" class="w-100">
+                <input 
+                  type="text" 
+                  class="form-control form-control-sm w-100" 
+                  [class.is-invalid]="editingErrors[item.id]"
+                  [(ngModel)]="editingQuantity[item.id]"
+                  (keyup.enter)="saveEdit(item)"
+                  (keyup.escape)="cancelEdit(item.id)"
+                  (input)="validateEditingData(item.id)">
+                
+                <!-- Bootstrap validation feedback -->
+                <div class="invalid-feedback" *ngIf="editingErrors[item.id]">
+                  {{ editingErrors[item.id] }}
+                </div>
+              </div>
+            </td>
+            <td class="text-nowrap">
+              <!-- View mode buttons -->
+              <div class="btn-group btn-group-sm" *ngIf="!isEditing(item.id)">
+                <button class="btn btn-outline-primary btn-sm" (click)="startEdit(item)">
+                  <i class="bi bi-pencil me-1"></i>
+                  <span class="d-none d-sm-inline">Edit</span>
+                </button>
+              </div>
+              
+              <!-- Edit mode buttons -->
+              <div class="btn-group btn-group-sm" *ngIf="isEditing(item.id)">
+                <button 
+                  class="btn btn-outline-success btn-sm" 
+                  (click)="saveEdit(item)" 
+                  [disabled]="!isValidEdit(item.id)">
+                  <i class="bi bi-check me-1"></i>
+                  <span class="d-none d-sm-inline">Save</span>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" (click)="cancelEdit(item.id)">
+                  <i class="bi bi-x me-1"></i>
+                  <span class="d-none d-sm-inline">Cancel</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Upload Modal component -->
+  <app-upload-inventory-modal 
+    [(show)]="showUploadModal" 
+    (inventoryUploaded)="onInventoryUploaded($event)">
+  </app-upload-inventory-modal>
+</div> 

@@ -1,0 +1,48 @@
+/* Apply to all first-column cells */
+.table td:first-child,
+.table th:first-child {
+  padding-left: 1.5rem;
+}
+
+/* Product image styling */
+.img-thumbnail {
+  border-radius: 0.375rem;
+  object-fit: cover;
+}
+
+/* Badge styling for client names */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+/* Form validation styling */
+.form-control.is-invalid {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.invalid-feedback {
+  display: block;
+  font-size: 0.875rem;
+  color: #dc3545;
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+} 
+
+.form-control-aligned {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  height: calc(1.75rem + 0.5rem + 2px) !important;
+  padding: 0.25rem 0.5rem !important;
+}

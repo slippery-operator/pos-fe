@@ -1,0 +1,115 @@
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
+  <div class="row d-flex align-items-center mb-3">
+    <div class="col-9 col-md-9 d-flex justify-content-start">
+      <h2 class="fs-4 mb-0">OMS | Add Orders</h2>
+    </div>
+    <div class="col col-md-3 d-flex justify-content-start justify-content-md-end fs-4 mt-3 mt-md-0">
+      <button class="btn btn-primary btn-sm w-md-auto" (click)="showAddModal = true">
+        <i class="bi bi-plus-circle me-2"></i>
+        Add Orders
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Panel Component -->
+  <app-search-panel
+    [searchFields]="searchFields"
+    title="Search"
+    [showSearchIcon]="true"
+    searchButtonText="Search"
+    searchButtonSize="sm"
+    (search)="onSearch($event)"
+    (clear)="onClearSearch()">
+  </app-search-panel>
+
+  <!-- Error Display Component -->
+  <app-error-display 
+    [showError]="(error$ | async) ? true : false"
+    [errorMessage]="(error$ | async) || ''"
+    [showRetryButton]="true"
+    (onRetry)="retryLoadOrders()">
+  </app-error-display>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading$ | async" class="text-center py-5">
+    <app-loading-spinner 
+      loadingText="Loading orders..."
+      size="lg">
+    </app-loading-spinner>
+  </div>
+
+  <!-- Content when not loading -->
+  <div *ngIf="!(loading$ | async)" class="row mt-4 fs-6">
+    <!-- No orders message -->
+    <div *ngIf="orders.length === 0" class="text-center p-4">
+      <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        No orders found. Click "Add Orders" to get started.
+      </div>
+    </div>
+
+    <!-- Orders table -->
+    <div class="table-responsive" *ngIf="orders.length > 0">
+      <table class="table table-hover table-borderless text-start">
+        <thead class="table-primary">
+          <tr>
+            <th scope="col" style="width: 15%" class="ps-4">Order ID</th>
+            <th scope="col" style="width: 25%">Date</th>
+            <th scope="col" style="width: 20%">Total Price</th>
+            <th scope="col" style="width: 40%">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="border-top">
+          <tr *ngFor="let order of orders" class="align-middle">
+            <td class="ps-4">
+              <span class="fw-medium">#{{ order.id }}</span>
+            </td>
+            <td>
+              <span class="text-muted">{{ formatDate(order.time) }}</span>
+            </td>
+            <td>
+              <span class="fw-bold text-success">₹{{ getTotalPrice(order) }}</span>
+            </td>
+            <td class="text-nowrap">
+              <div class="btn-group btn-group-sm">
+                <!-- Generate/Download Invoice Button -->
+                <button 
+                  *ngIf="!invoiceGenerated[order.id]"
+                  class="btn btn-outline-primary btn-sm" 
+                  (click)="onGenerateInvoice(order)">
+                  <i class="bi bi-file-earmark-text me-1"></i>
+                  <span class="d-none d-sm-inline">Generate Invoice</span>
+                </button>
+                <button 
+                  *ngIf="invoiceGenerated[order.id]"
+                  class="btn btn-outline-success btn-sm" 
+                  (click)="onDownloadInvoice(order)">
+                  <i class="bi bi-download me-1"></i>
+                  <span class="d-none d-sm-inline">Download Invoice</span>
+                </button>
+                
+                <!-- View Items Button -->
+                <button class="btn btn-outline-info btn-sm" (click)="onViewItems(order)">
+                  <i class="bi bi-eye me-1"></i>
+                  <span class="d-none d-sm-inline">View Items</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add Order Modal -->
+  <add-order-modal 
+    [(show)]="showAddModal" 
+    (orderCreated)="onOrderCreated($event)">
+  </add-order-modal>
+
+  <!-- View Order Items Modal -->
+  <view-order-items-modal 
+    [(show)]="showViewItemsModal"
+    [orderItems]="selectedOrderItems">
+  </view-order-items-modal>
+</div> 

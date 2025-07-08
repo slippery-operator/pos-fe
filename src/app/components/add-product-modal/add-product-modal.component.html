@@ -1,0 +1,206 @@
+<!-- Bootstrap 5 Modal -->
+<div class="modal fade" [class.show]="show" [style.display]="show ? 'block' : 'none'" 
+     tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel" [attr.aria-hidden]="show ? 'false' : 'true'">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addProductModalLabel">Add Products</h5>
+        <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-3" id="productTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" 
+                    [class.active]="activeTab === 'single'"
+                    (click)="activeTab = 'single'"
+                    type="button" 
+                    role="tab">
+              <i class="bi bi-plus-circle me-2"></i>
+              Single Product
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" 
+                    [class.active]="activeTab === 'bulk'"
+                    (click)="activeTab = 'bulk'"
+                    type="button" 
+                    role="tab">
+              <i class="bi bi-upload me-2"></i>
+              Bulk Upload
+            </button>
+          </li>
+        </ul>
+
+        <!-- Single Product Tab Content -->
+        <div *ngIf="activeTab === 'single'" class="tab-content">
+          <div class="row g-3">
+            <!-- Barcode Field -->
+            <div class="col-md-6">
+              <label for="barcode" class="form-label fw-semibold">Barcode *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [class.is-invalid]="hasFieldError('barcode')"
+                id="barcode" 
+                [(ngModel)]="barcode"
+                (input)="validateBarcode()"
+                (keydown)="onKeyPress($event)"
+                placeholder="Enter product barcode">
+              <div class="invalid-feedback" *ngIf="hasFieldError('barcode')">
+                {{ getFieldError('barcode') }}
+              </div>
+            </div>
+
+            <!-- Client Dropdown -->
+            <div class="col-md-6">
+              <label for="clientId" class="form-label fw-semibold mb-2">Client *</label>
+              <select 
+                class="form-select" 
+                [class.is-invalid]="hasFieldError('clientId')"
+                id="clientId" 
+                [(ngModel)]="selectedClientId"
+                (change)="validateClient()">
+                <option value="">Select a client</option>
+                <option *ngFor="let client of clients" [value]="client.clientId.toString()">
+                  {{ client.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="hasFieldError('clientId')">
+                {{ getFieldError('clientId') }}
+              </div>
+            </div>
+
+            <div class="dropdown">
+              <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Dropdown button
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Action</a></li>
+                <li><a class="dropdown-item" href="#">Another action</a></li>
+                <li><a class="dropdown-item" href="#">Something else here</a></li>
+              </ul>
+            </div>
+            <!-- Product Name Field -->
+            <div class="col-md-6">
+              <label for="productName" class="form-label fw-semibold">Product Name *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [class.is-invalid]="hasFieldError('name')"
+                id="productName" 
+                [(ngModel)]="productName"
+                (input)="validateProductName()"
+                (keydown)="onKeyPress($event)"
+                maxlength="255"
+                placeholder="Enter product name">
+              <div class="invalid-feedback" *ngIf="hasFieldError('name')">
+                {{ getFieldError('name') }}
+              </div>
+              
+              <!-- Character count warning using Bootstrap text classes -->
+              <div class="form-text" *ngIf="productName.length > 200 && productName.length <= 255">
+                <span class="text-warning fw-medium">
+                  {{ productName.length }}/255 characters
+                </span>
+              </div>
+            </div>
+
+            <!-- MRP Field -->
+            <div class="col-md-6">
+              <label for="mrp" class="form-label fw-semibold">MRP *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [class.is-invalid]="hasFieldError('mrp')"
+                id="mrp" 
+                [(ngModel)]="mrp"
+                (input)="validateMrp()"
+                (keydown)="onKeyPress($event)"
+                placeholder="Enter MRP">
+              <div class="invalid-feedback" *ngIf="hasFieldError('mrp')">
+                {{ getFieldError('mrp') }}
+              </div>
+            </div>
+
+            <!-- Image URL Field -->
+            <div class="col-12">
+              <label for="imageUrl" class="form-label fw-semibold">Image URL (Optional)</label>
+              <input 
+                type="url" 
+                class="form-control" 
+                id="imageUrl" 
+                [(ngModel)]="imageUrl"
+                (keydown)="onKeyPress($event)"
+                placeholder="Enter image URL">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk Upload Tab Content -->
+        <div *ngIf="activeTab === 'bulk'" class="tab-content">
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="card border-2 border-dashed">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-file-earmark-text text-muted mb-3" style="font-size: 3rem;"></i>
+                  <h6 class="card-title">Upload TSV File</h6>
+                  <p class="card-text text-muted mb-3">
+                    Select a TSV file containing product data to bulk upload products.
+                  </p>
+                  
+                  <div class="mb-3">
+                                      <input 
+                    type="file" 
+                    class="form-control" 
+                    [class.is-invalid]="hasFieldError('file')"
+                    accept=".tsv"
+                    (change)="onFileSelected($event)"
+                    id="tsvFile">
+                    <div class="invalid-feedback" *ngIf="hasFieldError('file')">
+                      {{ getFieldError('file') }}
+                    </div>
+                  </div>
+
+                  <div *ngIf="selectedFile" class="alert alert-info">
+                    <i class="bi bi-file-earmark-check me-2"></i>
+                    Selected file: {{ selectedFile.name }}
+                  </div>
+
+                  <div class="d-grid gap-2 d-md-block">
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-primary btn-sm"
+                      (click)="downloadSampleTsv()">
+                      <i class="bi bi-download me-2"></i>
+                      Download Sample TSV
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="closeModal()">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary btn-sm"
+          [disabled]="activeTab === 'single' ? !isSingleFormValid() : !isBulkFormValid()"
+          (click)="activeTab === 'single' ? onSubmitSingle() : onSubmitBulk()">
+          <i class="bi bi-plus-circle me-2" *ngIf="activeTab === 'single'"></i>
+          <i class="bi bi-upload me-2" *ngIf="activeTab === 'bulk'"></i>
+          {{ activeTab === 'single' ? 'Add Product' : 'Upload Products' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap 5 Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="show" *ngIf="show" (click)="onBackdropClick($event)"></div> 

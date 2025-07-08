@@ -1,0 +1,177 @@
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
+  <div class="row d-flex align-items-center mb-3">
+    <div class="col-9 col-md-9 d-flex justify-content-start">
+      <h2 class="fs-4 mb-0">Product Management System</h2>
+    </div>
+    <div class="col col-md-3 d-flex justify-content-start justify-content-md-end fs-4 mt-3 mt-md-0">
+      <button class="btn btn-primary btn-sm w-md-auto" (click)="showModal = true">
+        <i class="bi bi-plus-circle me-2"></i>
+        Add Products
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Panel Component -->
+  <app-search-panel
+    [searchFields]="searchFields"
+    title="Search"
+    [showSearchIcon]="true"
+    searchButtonText="Search"
+    searchButtonSize="sm"
+    (search)="onSearch($event)"
+    (clear)="onClearSearch()">
+  </app-search-panel>
+
+<!--   
+<!-- 
+  <!-- Custom Client Search Dropdown -->
+  <!-- <div class="row mt-3"> -->
+    <!-- <div class="col-md-4"> -->
+      <!-- <label for="clientSearch" class="form-label text small fw-medium mb-1">Filter by Client</label> -->
+      <!-- <select 
+        class="form-select form-select-sm form-control-aligned" 
+        id="clientSearch" 
+        [(ngModel)]="selectedClientId"
+        (change)="onClientFilterChange()">
+        <option value="">All Clients</option>
+        <option *ngFor="let client of clients" [value]="client.clientId.toString()">
+          {{ client.name }}
+        </option>
+      </select> -->
+    <!-- </div>
+  </div> --> 
+
+  <!-- Error Display Component -->
+  <app-error-display 
+    [showError]="(error$ | async) ? true : false"
+    [errorMessage]="(error$ | async) || ''"
+    [showRetryButton]="true"
+    (onRetry)="retryLoadProducts()">
+  </app-error-display>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading$ | async" class="text-center py-5">
+    <app-loading-spinner 
+      loadingText="Loading products..."
+      size="lg">
+    </app-loading-spinner>
+  </div>
+
+  <!-- Content when not loading -->
+  <div *ngIf="!(loading$ | async)" class="row mt-4 fs-6">
+    <!-- No products message -->
+    <div *ngIf="products.length === 0" class="text-center p-4">
+      <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        No products found. Click "Add Products" to get started.
+      </div>
+    </div>
+
+    <!-- Products table -->
+    <div class="table-responsive" *ngIf="products.length > 0">
+      <table class="table table-hover table-borderless text-start">
+        <thead class="table-primary">
+          <tr>
+            <th scope="col" style="width: 15%" class="ps-4">Barcode</th>
+            <th scope="col" style="width: 20%">Client</th>
+            <th scope="col" style="width: 30%">Name</th>
+            <th scope="col" style="width: 15%">MRP</th>
+            <!-- <th scope="col" style="width: 10%">Image</th> -->
+            <th scope="col" style="width: 15%">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="border-top">
+          <tr *ngFor="let product of products" class="align-middle">
+            <td class="ps-4">
+              <span class="fw-medium">{{ product.barcode }}</span>
+            </td>
+            <td>
+              <span class="badge rounded-pill text-bg-primary">{{ getClientName(product.clientId) }}</span>
+            </td>
+            <td>
+              <!-- Display mode -->
+              <span *ngIf="!isEditing(product.id)">{{ product.name }}</span>
+              
+              <!-- Edit mode -->
+              <div *ngIf="isEditing(product.id)" class="w-100">
+                <input 
+                  type="text" 
+                  class="form-control form-control-sm w-100" 
+                  [class.is-invalid]="editingErrors[product.id]"
+                  [(ngModel)]="editingName[product.id]"
+                  maxlength="255"
+                  (keyup.enter)="saveEdit(product)"
+                  (keyup.escape)="cancelEdit(product.id)"
+                  (input)="validateEditingData(product.id)">
+                
+                <!-- Bootstrap validation feedback -->
+                <div class="invalid-feedback" *ngIf="editingErrors[product.id]">
+                  {{ editingErrors[product.id] }}
+                </div>
+              </div>
+            </td>
+            <td>
+              <!-- Display mode -->
+              <span *ngIf="!isEditing(product.id)" class="fw-medium">₹{{ product.mrp }}</span>
+              
+              <!-- Edit mode -->
+              <div *ngIf="isEditing(product.id)" class="w-100">
+                <input 
+                  type="text" 
+                  class="form-control form-control-sm w-100" 
+                  [class.is-invalid]="editingErrors[product.id]"
+                  [(ngModel)]="editingMrp[product.id]"
+                  (keyup.enter)="saveEdit(product)"
+                  (keyup.escape)="cancelEdit(product.id)"
+                  (input)="validateEditingData(product.id)">
+              </div>
+            </td>
+            <!-- <td>
+              <div *ngIf="product.imageUrl; else noImage">
+                <img [src]="product.imageUrl" 
+                     alt="Product Image" 
+                     class="img-thumbnail" 
+                     style="max-width: 50px; max-height: 50px;"
+                     (error)="onImageError($event)">
+              </div>
+              <ng-template #noImage>
+                <span class="text-muted small">No image</span>
+              </ng-template>
+            </td> -->
+            <td class="text-nowrap">
+              <!-- View mode buttons -->
+              <div class="btn-group btn-group-sm" *ngIf="!isEditing(product.id)">
+                <button class="btn btn-outline-primary btn-sm" (click)="startEdit(product)">
+                  <i class="bi bi-pencil me-1"></i>
+                  <span class="d-none d-sm-inline">Edit</span>
+                </button>
+              </div>
+              
+              <!-- Edit mode buttons -->
+              <div class="btn-group btn-group-sm" *ngIf="isEditing(product.id)">
+                <button 
+                  class="btn btn-outline-success btn-sm" 
+                  (click)="saveEdit(product)" 
+                  [disabled]="!isValidEdit(product.id)">
+                  <i class="bi bi-check me-1"></i>
+                  <span class="d-none d-sm-inline">Save</span>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" (click)="cancelEdit(product.id)">
+                  <i class="bi bi-x me-1"></i>
+                  <span class="d-none d-sm-inline">Cancel</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal component -->
+  <add-product-modal 
+    [(show)]="showModal" 
+    (productAdded)="onProductAdded($event)"
+    (productsUploaded)="onProductsUploaded($event)">
+  </add-product-modal>
+</div> 

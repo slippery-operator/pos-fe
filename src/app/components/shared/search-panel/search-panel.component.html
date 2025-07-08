@@ -1,0 +1,57 @@
+<div class="search-panel bg-light py-2 mb-3">
+  <!-- Search Header -->
+  <!-- <div class="row mb-3">
+    <div class="col-12">
+      <h6 class="text mb-0 d-flex align-items-center fs-">
+        {{ title }}
+        <i *ngIf="showSearchIcon" class="bi bi-search ms-2" style="font-size: 0.875rem;"></i>
+      </h6>
+    </div>
+  </div> -->
+
+  <!-- Search Fields Row -->
+  <div class="row g-2 align-items-end">
+    <!-- Dynamic search fields -->
+    <div 
+      *ngFor="let field of searchFields; let last = last" 
+      class="col-12 col-sm-6 col-md-4 col-lg-3"
+      [class.col-lg-auto]="last && searchFields.length <= 4">
+      
+      <div class="form-group mb-0">
+        <label [for]="'search-' + field.key" class="form-label text small mb-1 fw-medium">
+          {{ field.label }}
+          <span *ngIf="field.required" class="text-danger">*</span>
+        </label>
+        
+        <input
+          [id]="'search-' + field.key"
+          [type]="field.type || 'text'"
+          class="form-control form-control-sm"
+          [placeholder]="field.placeholder || 'Enter ' + field.label.toLowerCase()"
+          [(ngModel)]="searchValues[field.key]"
+          (keyup)="onKeyPress($event)"
+          [required]="field.required || false"
+          [max]="field.max"
+          [min]="field.min">
+      </div>
+    </div>
+
+    <!-- Search and Clear Buttons -->
+    <div class="col-12 col-sm-6 col-md-4 col-lg-auto d-flex gap-2 justify-content-start" style="margin-top: 1.625rem;">
+      <button 
+        type="button" 
+        class="btn btn-primary {{ getButtonSizeClass() }}"
+        (click)="onSearch()">
+        {{ searchButtonText }}
+      </button>
+      
+      <button 
+        type="button" 
+        class="btn btn-outline-dark {{ getButtonSizeClass() }}"
+        (click)="onClear()"
+        [disabled]="!hasSearchValues()">
+        Clear
+      </button>
+    </div>
+  </div>
+</div>

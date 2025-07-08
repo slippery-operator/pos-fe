@@ -1,0 +1,194 @@
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
+  <div class="row d-flex align-items-center mb-3">
+    <div class="col-12">
+      <h2 class="fs-4 mb-0">Sales Report Generator</h2>
+    </div>
+  </div>
+
+  <!-- Error Display Component -->
+  <app-error-display 
+    [showError]="(error$ | async) ? true : false"
+    [errorMessage]="(error$ | async) || ''"
+    [showRetryButton]="true"
+    (onRetry)="retryLoadReport()">
+  </app-error-display>
+
+  <!-- Report Form -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-calendar-range me-2"></i>
+            Select Date Range
+          </h5>
+          
+          <form [formGroup]="reportForm" (ngSubmit)="generateReport()">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="startDate" class="form-label">Start Date</label>
+                <input 
+                  type="date" 
+                  class="form-control" 
+                  id="startDate"
+                  formControlName="startDate"
+                  [class.is-invalid]="reportForm.get('startDate')?.invalid && reportForm.get('startDate')?.touched">
+                
+                <div class="invalid-feedback" *ngIf="reportForm.get('startDate')?.invalid && reportForm.get('startDate')?.touched">
+                  <span *ngIf="reportForm.get('startDate')?.errors?.['required']">Start date is required</span>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <label for="endDate" class="form-label">End Date</label>
+                <input 
+                  type="date" 
+                  class="form-control" 
+                  id="endDate"
+                  formControlName="endDate"
+                  [max]="getYesterdayDate()"
+                  [class.is-invalid]="reportForm.get('endDate')?.invalid && reportForm.get('endDate')?.touched">
+                
+                <div class="invalid-feedback" *ngIf="reportForm.get('endDate')?.invalid && reportForm.get('endDate')?.touched">
+                  <span *ngIf="reportForm.get('endDate')?.errors?.['required']">End date is required</span>
+                  <span *ngIf="reportForm.get('endDate')?.errors?.['maxDateExceeded']">End date cannot be later than yesterday</span>
+                </div>
+                <div class="form-text">
+                  <i class="bi bi-info-circle me-1"></i>
+                  End date cannot be later than yesterday
+                </div>
+              </div>
+            </div>
+            
+            <!-- Date range validation error -->
+            <div class="alert alert-danger mt-3" *ngIf="reportForm.errors?.['dateRangeInvalid'] && reportForm.touched">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              End date cannot be before start date
+            </div>
+            
+            <div class="mt-4">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="(loading$ | async) || showReport">
+                <i class="bi bi-graph-up me-2"></i>
+                <span *ngIf="!(loading$ | async)">Generate Report</span>
+                <span *ngIf="loading$ | async">Generating...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading$ | async" class="text-center py-5">
+    <app-loading-spinner 
+      loadingText="Generating report..."
+      size="lg">
+    </app-loading-spinner>
+  </div>
+
+  <!-- Report Results -->
+  <div *ngIf="showReport && !(loading$ | async)" class="row mt-4">
+    <!-- Summary Cards -->
+    <div class="col-12 mb-4">
+      <h5 class="mb-3">
+        <i class="bi bi-bar-chart me-2"></i>
+        Summary Report
+      </h5>
+      
+      <div class="row g-3">
+        <!-- Invoiced Orders Card -->
+        <div class="col-md-4">
+          <div class="card border-primary h-100">
+            <div class="card-body text-center">
+              <div class="text-primary mb-2">
+                <i class="bi bi-receipt fs-1"></i>
+              </div>
+              <h4 class="card-title text-primary">{{ aggregatedData.totalInvoicedOrders }}</h4>
+              <p class="card-text">Invoiced Orders</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Invoiced Items Card -->
+        <div class="col-md-4">
+          <div class="card border-success h-100">
+            <div class="card-body text-center">
+              <div class="text-success mb-2">
+                <i class="bi bi-box-seam fs-1"></i>
+              </div>
+              <h4 class="card-title text-success">{{ aggregatedData.totalInvoicedItems }}</h4>
+              <p class="card-text">Invoiced Items</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Total Revenue Card -->
+        <div class="col-md-4">
+          <div class="card border-warning h-100">
+            <div class="card-body text-center">
+              <div class="text-warning mb-2">
+                <i class="bi bi-currency-rupee fs-1"></i>
+              </div>
+              <h4 class="card-title text-warning">{{ formatCurrency(aggregatedData.totalRevenue) }}</h4>
+              <p class="card-text">Total Revenue</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Daily Breakdown Table -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-calendar-day me-2"></i>
+            Daily Breakdown
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th class="text-center">Orders</th>
+                  <th class="text-center">Items</th>
+                  <th class="text-end">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let day of reportData">
+                  <td>
+                    <span class="fw-medium">{{ formatDate(day.date) }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-primary">{{ day.invoicedOrdersCount }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-success">{{ day.invoicedItemsCount }}</span>
+                  </td>
+                  <td class="text-end">
+                    <span class="fw-medium">{{ formatCurrency(day.totalRevenue) }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- No data message -->
+          <div *ngIf="reportData.length === 0" class="text-center py-4">
+            <div class="alert alert-info" role="alert">
+              <i class="bi bi-info-circle me-2"></i>
+              No data available for the selected date range.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

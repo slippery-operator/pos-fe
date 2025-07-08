@@ -1,0 +1,12 @@
+/* Error display component styles */
+.error-container {
+  margin: 1rem 0;
+}
+
+.alert {
+  border-radius: 0.5rem;
+}
+
+.alert-heading {
+  font-weight: 600;
+} 

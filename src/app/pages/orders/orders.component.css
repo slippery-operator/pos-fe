@@ -1,0 +1,25 @@
+/* Table styling */
+.table th {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+/* Button styling */
+.btn-group-sm .btn {
+  font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .btn-group-sm .btn span {
+    display: none !important;
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+} 

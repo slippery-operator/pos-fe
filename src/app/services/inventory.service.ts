@@ -1,17 +1,17 @@
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable, catchError, finalize, map, of, tap, throwError } from "rxjs";
-import { Client, ClientRequest } from "../models/client.model";
+import { BehaviorSubject, Observable, catchError, finalize, tap, throwError } from "rxjs";
+import { InventoryResponse, InventoryUpdateForm, InventorySearchRequest } from "../models/inventory.model";
 
 /**
- * Service for managing client data operations
+ * Service for managing inventory data operations
  * Handles CRUD operations with proper error handling and loading states
  */
 @Injectable({
     providedIn: 'root'
 })
-export class ClientService {
-    private apiUrl = 'http://localhost:9000/clients';
+export class InventoryService {
+    private apiUrl = 'http://localhost:9000/inventory';
     
     // Loading state management
     private loadingSubject = new BehaviorSubject<boolean>(false);
@@ -24,16 +24,27 @@ export class ClientService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Retrieves all clients from the API
-     * @returns Observable of Client array
+     * Searches inventory based on search criteria
+     * @param searchRequest - Search criteria
+     * @returns Observable of InventoryResponse array
      */
-    getClients(): Observable<Client[]> {
+    searchInventory(searchRequest: InventorySearchRequest): Observable<InventoryResponse[]> {
         this.setLoading(true);
         this.clearError();
         
-        return this.http.get<Client[]>(this.apiUrl).pipe(
-            tap(clients => {
-                console.log('Clients loaded successfully:', clients.length);
+        const params = new URLSearchParams();
+        if (searchRequest.minQty !== undefined) {
+            params.append('minQty', searchRequest.minQty.toString());
+        }
+        if (searchRequest.maxQty !== undefined) {
+            params.append('maxQty', searchRequest.maxQty.toString());
+        }
+        
+        const url = params.toString() ? `${this.apiUrl}?${params.toString()}` : this.apiUrl;
+        
+        return this.http.get<InventoryResponse[]>(url).pipe(
+            tap(inventory => {
+                console.log('Inventory search completed:', inventory.length);
             }),
             catchError(this.handleError.bind(this)),
             finalize(() => this.setLoading(false))
@@ -41,17 +52,18 @@ export class ClientService {
     }
 
     /**
-     * Adds a new client to the system
-     * @param client - Client data to add
-     * @returns Observable of the created Client
+     * Updates inventory by product ID
+     * @param productId - Product ID to update inventory for
+     * @param inventoryUpdateForm - Updated inventory data
+     * @returns Observable of the updated InventoryResponse
      */
-    addClient(client: ClientRequest): Observable<Client> {
+    updateInventoryByProductId(productId: number, inventoryUpdateForm: InventoryUpdateForm): Observable<InventoryResponse> {
         this.setLoading(true);
         this.clearError();
         
-        return this.http.post<Client>(this.apiUrl, client).pipe(
-            tap(newClient => {
-                console.log('Client added successfully:', newClient);
+        return this.http.put<InventoryResponse>(`${this.apiUrl}/${productId}`, inventoryUpdateForm).pipe(
+            tap(updatedInventory => {
+                console.log('Inventory updated successfully:', updatedInventory);
             }),
             catchError(this.handleError.bind(this)),
             finalize(() => this.setLoading(false))
@@ -59,18 +71,20 @@ export class ClientService {
     }
 
     /**
-     * Updates an existing client
-     * @param id - Client ID to update
-     * @param client - Updated client data
-     * @returns Observable of the updated Client
+     * Uploads inventory from TSV file
+     * @param file - TSV file containing inventory data
+     * @returns Observable of InventoryResponse array
      */
-    updateClient(id: number, client: ClientRequest): Observable<Client> {
+    uploadInventoryTsv(file: File): Observable<InventoryResponse[]> {
         this.setLoading(true);
         this.clearError();
         
-        return this.http.put<Client>(`${this.apiUrl}/${id}`, client).pipe(
-            tap(updatedClient => {
-                console.log('Client updated successfully:', updatedClient);
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        return this.http.post<InventoryResponse[]>(`${this.apiUrl}/upload`, formData).pipe(
+            tap(inventory => {
+                console.log('Inventory uploaded successfully:', inventory.length);
             }),
             catchError(this.handleError.bind(this)),
             finalize(() => this.setLoading(false))
@@ -136,24 +150,4 @@ export class ClientService {
     public clearErrorState(): void {
         this.clearError();
     }
-
-    /**
-     * Searches clients by name using the search endpoint
-     * @param name - Name to search for
-     * @returns Observable of Client array matching the search criteria
-     */
-    searchClientsByName(name: string): Observable<Client[]> {
-        this.setLoading(true);
-        this.clearError();
-        
-        const searchUrl = `${this.apiUrl}/search?name=${encodeURIComponent(name)}`;
-        
-        return this.http.get<Client[]>(searchUrl).pipe(
-            tap(clients => {
-                console.log('Clients search completed:', clients.length, 'results for:', name);
-            }),
-            catchError(this.handleError.bind(this)),
-            finalize(() => this.setLoading(false))
-        );
-    }
-}
+} 

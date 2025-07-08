@@ -17,6 +17,7 @@
             id="clientName" 
             [(ngModel)]="clientName"
             (input)="validateName()" 
+            (keydown)="onKeyPress($event)"
             maxlength="255"
             placeholder="Enter client name">
           
