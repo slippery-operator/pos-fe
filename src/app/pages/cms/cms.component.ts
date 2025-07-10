@@ -28,7 +28,7 @@ import { ToastService } from '../../services/toast.service';
   templateUrl: './cms.component.html',
   styleUrl: './cms.component.css'
 })
-export class CmsComponent implements OnInit, OnDestroy {
+export class CmsComponent {
   clients: Client[] = [];
   showModal = false;
   editingClient: { [key: number]: boolean } = {};
@@ -40,7 +40,7 @@ export class CmsComponent implements OnInit, OnDestroy {
     {
       key: 'name',
       label: 'Name',
-      placeholder: 'Search by Client name',
+      placeholder: 'Search by Client Name',
       type: 'text'
     }
   ];
@@ -57,10 +57,6 @@ export class CmsComponent implements OnInit, OnDestroy {
     this.loadClients();
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 
   /**
    * Loads all clients from the API
@@ -84,6 +80,7 @@ export class CmsComponent implements OnInit, OnDestroy {
    * Starts editing mode for a client
    * @param client - The client to edit
    */
+  // TODO: use spy operator to check if the function is called
   startEdit(client: Client) {
     this.editingClient[client.clientId] = true;
     this.editingName[client.clientId] = client.name;
@@ -127,7 +124,7 @@ export class CmsComponent implements OnInit, OnDestroy {
     const trimmedName = name ? name.trim() : '';
     return trimmedName.length > 0 && trimmedName.length <= 255 && !this.editingErrors[clientId];
   }
-
+// TODO: use safe check opertor
   /**
    * Saves the edited client data
    * @param client - The client being edited
@@ -237,12 +234,18 @@ export class CmsComponent implements OnInit, OnDestroy {
   }
 
   // Observable streams from service
+  // TODO: no need
   get loading$() {
     return this.clientService.loading$;
   }
   
   get error$() {
     return this.clientService.error$;
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

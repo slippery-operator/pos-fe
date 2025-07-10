@@ -44,13 +44,13 @@ export class ProductsComponent implements OnInit, OnDestroy {
     {
       key: 'barcode',
       label: 'Barcode',
-      placeholder: 'Search by barcode',
+      placeholder: 'Search by Barcode',
       type: 'text'
     },
     {
       key: 'productName',
       label: 'Product Name',
-      placeholder: 'Search by product name',
+      placeholder: 'Search by Product Name',
       type: 'text'
     }
   ];

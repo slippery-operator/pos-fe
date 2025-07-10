@@ -40,15 +40,9 @@ export class InventoryComponent implements OnInit, OnDestroy {
   // Search configuration
   searchFields: SearchField[] = [
     {
-      key: 'minQty',
-      label: 'From',
-      placeholder: 'Minimum quantity',
-      type: 'text'
-    },
-    {
-      key: 'maxQty',
-      label: 'To',
-      placeholder: 'Maximum quantity',
+      key: 'productName',
+      label: 'Product Name',
+      placeholder: 'Search by Product Name',
       type: 'text'
     }
   ];
@@ -241,12 +235,9 @@ export class InventoryComponent implements OnInit, OnDestroy {
   onSearch(criteria: SearchCriteria): void {
     const searchRequest: InventorySearchRequest = {};
     
-    // Map quantity range parameters for search
-    if (criteria['minQty']) {
-      searchRequest.minQty = Number(criteria['minQty']);
-    }
-    if (criteria['maxQty']) {
-      searchRequest.maxQty = Number(criteria['maxQty']);
+    // Map product name parameter for search
+    if (criteria['productName']) {
+      searchRequest.productName = criteria['productName'] as string;
     }
     
     this.inventoryService.searchInventory(searchRequest)
@@ -254,10 +245,8 @@ export class InventoryComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (inventory: InventoryResponse[]) => {
           this.inventory = inventory;
-          if (criteria['minQty'] || criteria['maxQty']) {
-            const minQty = criteria['minQty'] || '0';
-            const maxQty = criteria['maxQty'] || '∞';
-            this.toastService.showSuccess(`Found ${inventory.length} inventory records for quantity range ${minQty} - ${maxQty}`);
+          if (criteria['productName']) {
+            this.toastService.showSuccess(`Found ${inventory.length} inventory records for product: ${criteria['productName']}`);
           }
         },
         error: (error: any) => {

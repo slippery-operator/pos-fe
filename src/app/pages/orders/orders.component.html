@@ -1,7 +1,7 @@
 <div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
   <div class="row d-flex align-items-center mb-3">
     <div class="col-9 col-md-9 d-flex justify-content-start">
-      <h2 class="fs-4 mb-0">OMS | Add Orders</h2>
+      <h2 class="fs-4 mb-0">Order Management System</h2>
     </div>
     <div class="col col-md-3 d-flex justify-content-start justify-content-md-end fs-4 mt-3 mt-md-0">
       <button class="btn btn-primary btn-sm w-md-auto" (click)="showAddModal = true">
@@ -14,7 +14,6 @@
   <!-- Search Panel Component -->
   <app-search-panel
     [searchFields]="searchFields"
-    title="Search"
     [showSearchIcon]="true"
     searchButtonText="Search"
     searchButtonSize="sm"
@@ -53,25 +52,25 @@
       <table class="table table-hover table-borderless text-start">
         <thead class="table-primary">
           <tr>
-            <th scope="col" style="width: 15%" class="ps-4">Order ID</th>
+            <th scope="col" style="width: 20%" class="ps-4">Order ID</th>
             <th scope="col" style="width: 25%">Date</th>
             <th scope="col" style="width: 20%">Total Price</th>
-            <th scope="col" style="width: 40%">Actions</th>
+            <th scope="col" style="width: 35%">Actions</th>
           </tr>
         </thead>
         <tbody class="border-top">
           <tr *ngFor="let order of orders" class="align-middle">
             <td class="ps-4">
-              <span class="fw-medium">#{{ order.id }}</span>
+              <span class="">#{{ order.id }}</span>
             </td>
             <td>
-              <span class="text-muted">{{ formatDate(order.time) }}</span>
+              <span class="">{{ formatDate(order.time) }}</span>
             </td>
             <td>
-              <span class="fw-bold text-success">₹{{ getTotalPrice(order) }}</span>
+              <span class="">₹{{ getTotalPrice(order) }}</span>
             </td>
             <td class="text-nowrap">
-              <div class="btn-group btn-group-sm">
+              <div class="d-flex gap-1">
                 <!-- Generate/Download Invoice Button -->
                 <button 
                   *ngIf="!invoiceGenerated[order.id]"
@@ -89,7 +88,7 @@
                 </button>
                 
                 <!-- View Items Button -->
-                <button class="btn btn-outline-info btn-sm" (click)="onViewItems(order)">
+                <button class="btn btn-outline-info btn-sm ms-2" (click)="onViewItems(order)">
                   <i class="bi bi-eye me-1"></i>
                   <span class="d-none d-sm-inline">View Items</span>
                 </button>

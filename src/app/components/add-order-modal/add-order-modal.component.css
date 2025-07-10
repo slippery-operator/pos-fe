@@ -1,7 +1,7 @@
 /* Modal backdrop styling */
 .modal-backdrop {
   z-index: 1040;
-}
+} 
 
 .modal {
   z-index: 1050;
@@ -23,8 +23,19 @@
 }
 
 /* Button styling */
-.btn-sm {
+/* .btn-sm {
   font-size: 0.875rem;
+} */
+
+/* Remove number input arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 /* Responsive adjustments */

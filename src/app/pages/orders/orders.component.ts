@@ -42,21 +42,19 @@ export class OrdersComponent implements OnInit, OnDestroy {
     {
       key: 'startDate',
       label: 'Start Date',
-      placeholder: 'YYYY-MM-DD',
       type: 'date'
     },
     {
       key: 'endDate',
       label: 'End Date',
-      placeholder: 'YYYY-MM-DD',
       type: 'date',
       max: new Date().toISOString().split('T')[0] // Limit to current date
     },
     {
       key: 'orderId',
       label: 'Order ID',
-      placeholder: 'Search by order ID',
-      type: 'number'
+      placeholder: 'Search by Order ID',
+      type: 'text'
     }
   ];
 

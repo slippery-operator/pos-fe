@@ -349,4 +349,33 @@ export class AddProductModalComponent implements OnInit, OnDestroy {
       this.clearFieldError('file');
     }
   }
+
+  /**
+   * Gets the selected client name for display
+   * @returns Selected client name or empty string
+   */
+  getSelectedClientName(): string {
+    if (!this.selectedClientId) return '';
+    const client = this.clients.find(c => c.clientId === this.selectedClientId);
+    return client ? client.name : '';
+  }
+
+  /**
+   * Handles client selection from dropdown
+   * @param clientId - The selected client ID
+   * @param event - The click event
+   */
+  selectClient(clientId: number, event: Event): void {
+    event.preventDefault();
+    this.selectedClientId = clientId;
+    this.validateClient();
+  }
+
+  /**
+   * Toggles the client dropdown (placeholder for Bootstrap functionality)
+   */
+  toggleClientDropdown(): void {
+    // Bootstrap will handle the dropdown toggle automatically
+    // This method is here for potential future customization
+  }
 } 

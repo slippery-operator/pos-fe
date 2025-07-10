@@ -3,7 +3,7 @@
      tabindex="-1" 
      role="dialog"
      (click)="onBackdropClick($event)">
-  <div class="modal-dialog modal-lg" role="document">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
       <!-- Modal Header -->
       <div class="modal-header">
@@ -11,11 +11,6 @@
           <i class="bi bi-cart-plus me-2"></i>
           Add New Order
         </h5>
-        <button type="button" 
-                class="btn-close" 
-                (click)="closeModal()"
-                aria-label="Close">
-        </button>
       </div>
 
       <!-- Modal Body -->
@@ -128,12 +123,12 @@
       <!-- Modal Footer -->
       <div class="modal-footer">
         <button type="button" 
-                class="btn btn-secondary" 
+                class="btn btn-outline-danger btn-sm" 
                 (click)="closeModal()">
           Cancel
         </button>
         <button type="button" 
-                class="btn btn-primary" 
+                class="btn btn-primary btn-sm" 
                 (click)="onSubmit()"
                 [disabled]="!isFormValid()">
           <i class="bi bi-check-circle me-1"></i>

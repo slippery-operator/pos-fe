@@ -33,11 +33,8 @@ export class InventoryService {
         this.clearError();
         
         const params = new URLSearchParams();
-        if (searchRequest.minQty !== undefined) {
-            params.append('minQty', searchRequest.minQty.toString());
-        }
-        if (searchRequest.maxQty !== undefined) {
-            params.append('maxQty', searchRequest.maxQty.toString());
+        if (searchRequest.productName) {
+            params.append('productName', searchRequest.productName);
         }
         
         const url = params.toString() ? `${this.apiUrl}?${params.toString()}` : this.apiUrl;

@@ -1,3 +1,4 @@
+// TODO:  create types as: inventory.type.ts
 export interface InventoryResponse {
     id: number;
     productId: number;
@@ -17,6 +18,5 @@ export interface InventoryForm {
 }
 
 export interface InventorySearchRequest {
-    minQty?: number;
-    maxQty?: number;
+    productName?: string;
 } 

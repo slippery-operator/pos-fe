@@ -18,32 +18,30 @@
     <div class="col-12">
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title mb-3">
-            <i class="bi bi-calendar-range me-2"></i>
-            Select Date Range
-          </h5>
           
           <form [formGroup]="reportForm" (ngSubmit)="generateReport()">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label for="startDate" class="form-label">Start Date</label>
+            <div class="row g-3 align-items-end align-middle">
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3 form-group mb-0">
+                <label for="startDate" class="form-label text small mb-1 fw-medium">Start Date</label>
                 <input 
                   type="date" 
-                  class="form-control" 
+                  class="form-control form-control-sm" 
                   id="startDate"
                   formControlName="startDate"
+                  [max]="getYesterdayDate()"
                   [class.is-invalid]="reportForm.get('startDate')?.invalid && reportForm.get('startDate')?.touched">
                 
                 <div class="invalid-feedback" *ngIf="reportForm.get('startDate')?.invalid && reportForm.get('startDate')?.touched">
                   <span *ngIf="reportForm.get('startDate')?.errors?.['required']">Start date is required</span>
+                  <span *ngIf="reportForm.get('startDate')?.errors?.['maxDateExceeded']">Start date cannot be later than yesterday</span>
                 </div>
               </div>
               
-              <div class="col-md-6">
-                <label for="endDate" class="form-label">End Date</label>
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3 form-group mb-0">
+                <label for="endDate" class="form-label text small mb-1 fw-medium">End Date</label>
                 <input 
                   type="date" 
-                  class="form-control" 
+                  class="form-control form-control-sm" 
                   id="endDate"
                   formControlName="endDate"
                   [max]="getYesterdayDate()"
@@ -53,10 +51,17 @@
                   <span *ngIf="reportForm.get('endDate')?.errors?.['required']">End date is required</span>
                   <span *ngIf="reportForm.get('endDate')?.errors?.['maxDateExceeded']">End date cannot be later than yesterday</span>
                 </div>
-                <div class="form-text">
-                  <i class="bi bi-info-circle me-1"></i>
-                  End date cannot be later than yesterday
-                </div>
+              </div>
+              
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3 m">
+                <button 
+                  type="submit" 
+                  class="btn btn-success btn-sm"
+                  [disabled]="(loading$ | async) || showReport">
+                  <i class="bi bi-graph-up me-2"></i>
+                  <span *ngIf="!(loading$ | async)">Generate Report</span>
+                  <span *ngIf="loading$ | async">Generating...</span>
+                </button>
               </div>
             </div>
             
@@ -64,17 +69,6 @@
             <div class="alert alert-danger mt-3" *ngIf="reportForm.errors?.['dateRangeInvalid'] && reportForm.touched">
               <i class="bi bi-exclamation-triangle me-2"></i>
               End date cannot be before start date
-            </div>
-            
-            <div class="mt-4">
-              <button 
-                type="submit" 
-                class="btn btn-primary"
-                [disabled]="(loading$ | async) || showReport">
-                <i class="bi bi-graph-up me-2"></i>
-                <span *ngIf="!(loading$ | async)">Generate Report</span>
-                <span *ngIf="loading$ | async">Generating...</span>
-              </button>
             </div>
           </form>
         </div>
@@ -133,7 +127,7 @@
               <div class="text-warning mb-2">
                 <i class="bi bi-currency-rupee fs-1"></i>
               </div>
-              <h4 class="card-title text-warning">{{ formatCurrency(aggregatedData.totalRevenue) }}</h4>
+              <h4 class="card-title text-warning">{{ formatNumber(aggregatedData.totalRevenue) }}</h4>
               <p class="card-text">Total Revenue</p>
             </div>
           </div>

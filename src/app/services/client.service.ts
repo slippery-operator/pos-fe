@@ -13,6 +13,8 @@ import { Client, ClientRequest } from "../models/client.model";
 export class ClientService {
     private apiUrl = 'http://localhost:9000/clients';
     
+    // Create file base urls ki... Can keep this URL part here
+
     // Loading state management
     private loadingSubject = new BehaviorSubject<boolean>(false);
     public loading$ = this.loadingSubject.asObservable();

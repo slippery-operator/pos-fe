@@ -43,7 +43,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     private fb: FormBuilder
   ) {
     this.reportForm = this.fb.group({
-      startDate: ['', [Validators.required]],
+      startDate: ['', [Validators.required, this.maxDateValidator.bind(this)]],
       endDate: ['', [Validators.required, this.maxDateValidator.bind(this)]]
     }, { validators: this.dateRangeValidator });
   }
@@ -196,6 +196,18 @@ export class ReportsComponent implements OnInit, OnDestroy {
   retryLoadReport(): void {
     this.reportService.clearErrorState();
     this.generateReport();
+  }
+
+  /**
+   * Formats currency for display (without rupee symbol)
+   * @param amount - Amount to format
+   * @returns Formatted number string with comma formatting
+   */
+  formatNumber(amount: number): string {
+    return new Intl.NumberFormat('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
   }
 
   /**

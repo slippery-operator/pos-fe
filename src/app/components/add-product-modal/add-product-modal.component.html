@@ -1,11 +1,10 @@
 <!-- Bootstrap 5 Modal -->
 <div class="modal fade" [class.show]="show" [style.display]="show ? 'block' : 'none'" 
      tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel" [attr.aria-hidden]="show ? 'false' : 'true'">
-  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+  <div class="modal-dialog modal modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addProductModalLabel">Add Products</h5>
-        <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
       </div>
       
       <div class="modal-body">
@@ -17,7 +16,6 @@
                     (click)="activeTab = 'single'"
                     type="button" 
                     role="tab">
-              <i class="bi bi-plus-circle me-2"></i>
               Single Product
             </button>
           </li>
@@ -27,7 +25,6 @@
                     (click)="activeTab = 'bulk'"
                     type="button" 
                     role="tab">
-              <i class="bi bi-upload me-2"></i>
               Bulk Upload
             </button>
           </li>
@@ -56,32 +53,33 @@
             <!-- Client Dropdown -->
             <div class="col-md-6">
               <label for="clientId" class="form-label fw-semibold mb-2">Client *</label>
-              <select 
-                class="form-select" 
-                [class.is-invalid]="hasFieldError('clientId')"
-                id="clientId" 
-                [(ngModel)]="selectedClientId"
-                (change)="validateClient()">
-                <option value="">Select a client</option>
-                <option *ngFor="let client of clients" [value]="client.clientId.toString()">
-                  {{ client.name }}
-                </option>
-              </select>
+              <div class="dropdown">
+                <button 
+                  class="form-select dropdown-toggle" 
+                  [class.is-invalid]="hasFieldError('clientId')"
+                  type="button" 
+                  id="clientId"
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false"
+                  (click)="toggleClientDropdown()">
+                  {{ getSelectedClientName() || 'Select a client' }}
+                </button>
+                <ul class="dropdown-menu w-100">
+                  <li *ngFor="let client of clients">
+                    <a class="dropdown-item" 
+                       href="#" 
+                       (click)="selectClient(client.clientId, $event)">
+                      {{ client.name }}
+                    </a>
+                  </li>
+                </ul>
+              </div>
               <div class="invalid-feedback" *ngIf="hasFieldError('clientId')">
                 {{ getFieldError('clientId') }}
               </div>
             </div>
 
-            <div class="dropdown">
-              <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Dropdown button
-              </button>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Action</a></li>
-                <li><a class="dropdown-item" href="#">Another action</a></li>
-                <li><a class="dropdown-item" href="#">Something else here</a></li>
-              </ul>
-            </div>
+
             <!-- Product Name Field -->
             <div class="col-md-6">
               <label for="productName" class="form-label fw-semibold">Product Name *</label>
