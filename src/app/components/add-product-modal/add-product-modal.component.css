@@ -31,4 +31,56 @@
   display: block;
   font-size: 0.875rem;
   color: #dc3545;
-} 
+}
+
+/* Dropdown styling to prevent modal movement */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  z-index: 1060 !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  transform: none !important;
+}
+
+.dropdown-item {
+  padding: 0.375rem 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item:active {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+/* Modal body positioning */
+.modal-body {
+  position: relative;
+  overflow: visible;
+}
+
+/* Prevent modal from moving when dropdown opens */
+.modal-dialog {
+  position: relative;
+  margin: 1.75rem auto;
+  pointer-events: none;
+}
+
+.modal-content {
+  position: relative;
+  pointer-events: auto;
+}

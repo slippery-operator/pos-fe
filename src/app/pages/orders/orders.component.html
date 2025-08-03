@@ -4,7 +4,11 @@
       <h2 class="fs-4 mb-0">Order Management System</h2>
     </div>
     <div class="col col-md-3 d-flex justify-content-start justify-content-md-end fs-4 mt-3 mt-md-0">
-      <button class="btn btn-primary btn-sm w-md-auto" (click)="showAddModal = true">
+      
+      <button 
+        class="btn btn-primary btn-sm w-md-auto" 
+        (click)="showAddModal = true"
+        [disabled]="(loading$ | async) || addButtonDisabled">
         <i class="bi bi-plus-circle me-2"></i>
         Add Orders
       </button>
@@ -22,12 +26,12 @@
   </app-search-panel>
 
   <!-- Error Display Component -->
-  <app-error-display 
+  <!-- <app-error-display 
     [showError]="(error$ | async) ? true : false"
     [errorMessage]="(error$ | async) || ''"
     [showRetryButton]="true"
     (onRetry)="retryLoadOrders()">
-  </app-error-display>
+  </app-error-display> -->
 
   <!-- Loading Spinner -->
   <div *ngIf="loading$ | async" class="text-center py-5">
@@ -52,10 +56,10 @@
       <table class="table table-hover table-borderless text-start">
         <thead class="table-primary">
           <tr>
-            <th scope="col" style="width: 20%" class="ps-4">Order ID</th>
-            <th scope="col" style="width: 25%">Date</th>
-            <th scope="col" style="width: 20%">Total Price</th>
-            <th scope="col" style="width: 35%">Actions</th>
+            <th scope="col" class="col-2 ps-4">Order ID</th>
+            <th scope="col" class="col-4">Date</th>
+            <th scope="col" class="col-2">Total Price</th>
+            <th scope="col" class="col-4">Actions</th>
           </tr>
         </thead>
         <tbody class="border-top">
@@ -75,12 +79,19 @@
                 <button 
                   *ngIf="!invoiceGenerated[order.id]"
                   class="btn btn-outline-primary btn-sm" 
+                  [disabled]="generatingInvoice[order.id]"
                   (click)="onGenerateInvoice(order)">
-                  <i class="bi bi-file-earmark-text me-1"></i>
-                  <span class="d-none d-sm-inline">Generate Invoice</span>
+                  <i class="bi bi-file-earmark-text me-1" *ngIf="!generatingInvoice[order.id]"></i>
+                  <span class="spinner-border spinner-border-sm me-1" *ngIf="generatingInvoice[order.id]"></span>
+                  <span class="d-none d-sm-inline">
+                    {{ generatingInvoice[order.id] ? 'Generating...' : 'Generate Invoice' }}
+                  </span>
+                  <span class="d-sm-none">
+                    {{ generatingInvoice[order.id] ? '...' : 'Generate' }}
+                  </span>
                 </button>
                 <button 
-                  *ngIf="invoiceGenerated[order.id]"
+                  *ngIf="invoiceGenerated[order.id] "
                   class="btn btn-outline-success btn-sm" 
                   (click)="onDownloadInvoice(order)">
                   <i class="bi bi-download me-1"></i>
@@ -88,7 +99,7 @@
                 </button>
                 
                 <!-- View Items Button -->
-                <button class="btn btn-outline-info btn-sm ms-2" (click)="onViewItems(order)">
+                <button class="btn btn-outline-custom-purple btn-sm ms-2" (click)="onViewItems(order)">
                   <i class="bi bi-eye me-1"></i>
                   <span class="d-none d-sm-inline">View Items</span>
                 </button>
@@ -97,6 +108,16 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination Component -->
+    <div class="d-flex justify-content-center mt-4" *ngIf="!(loading$ | async)">
+      <app-pagination
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [totalItems]="totalItems"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
     </div>
   </div>
 

@@ -7,6 +7,9 @@ import { Client, ClientRequest } from "../models/client.model";
  * Service for managing client data operations
  * Handles CRUD operations with proper error handling and loading states
  */
+
+// Service hogi alag.. Joh URL aur param receiv ehone pe khduse GET/POST call hoga..
+// Error handling ki aalg file hogi same as API Calls  one jaha 
 @Injectable({
     providedIn: 'root'
 })
@@ -26,14 +29,22 @@ export class ClientService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Retrieves all clients from the API
+     * Retrieves all clients from the API with pagination
+     * @param page - Page number (0-based)
+     * @param size - Page size
      * @returns Observable of Client array
      */
-    getClients(): Observable<Client[]> {
+    getClients(page: number = 0, size: number = 10): Observable<Client[]> {
         this.setLoading(true);
         this.clearError();
         
-        return this.http.get<Client[]>(this.apiUrl).pipe(
+        const params = new URLSearchParams();
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        
+        const url = `${this.apiUrl}?${params.toString()}`;
+        
+        return this.http.get<Client[]>(url).pipe(
             tap(clients => {
                 console.log('Clients loaded successfully:', clients.length);
             }),
@@ -87,19 +98,33 @@ export class ClientService {
     private handleError(error: HttpErrorResponse): Observable<never> {
         let errorMessage = 'An unexpected error occurred';
         
+        // Don't handle 401 errors here - they're handled by the interceptor
+        if (error.status === 401) {
+            return throwError(() => error);
+        }
+        
         if (error.error instanceof ErrorEvent) {
             // Client-side error
             errorMessage = `Client Error: ${error.error.message}`;
         } else {
-            // Server-side error
-            errorMessage = `Server Error: ${error.status} - ${error.message}`;
-            
-            if (error.status === 404) {
-                errorMessage = 'Resource not found';
-            } else if (error.status === 500) {
-                errorMessage = 'Internal server error';
-            } else if (error.status === 0) {
-                errorMessage = 'Unable to connect to server';
+            // Check if it's a structured error response from backend
+            if (error.error && typeof error.error === 'object' && error.error.message) {
+                // Extract the exact message from backend structured error
+                errorMessage = error.error.message;
+            } else if (error.error && typeof error.error === 'string') {
+                // If error is a string, use it directly
+                errorMessage = error.error;
+            } else {
+                // Fallback to generic server error
+                errorMessage = `Server Error: ${error.status} - ${error.message}`;
+                
+                if (error.status === 404) {
+                    errorMessage = 'Resource not found';
+                } else if (error.status === 500) {
+                    errorMessage = 'Internal server error';
+                } else if (error.status === 0) {
+                    errorMessage = 'Unable to connect to server';
+                }
             }
         }
         
@@ -140,19 +165,49 @@ export class ClientService {
     }
 
     /**
-     * Searches clients by name using the search endpoint
+     * Searches clients by name using the search endpoint with pagination
      * @param name - Name to search for
+     * @param page - Page number (0-based)
+     * @param size - Page size
      * @returns Observable of Client array matching the search criteria
      */
-    searchClientsByName(name: string): Observable<Client[]> {
+    searchClientsByName(name: string, page: number = 0, size: number = 10): Observable<Client[]> {
         this.setLoading(true);
         this.clearError();
         
-        const searchUrl = `${this.apiUrl}/search?name=${encodeURIComponent(name)}`;
+        const params = new URLSearchParams();
+        params.append('name', name);
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        
+        const searchUrl = `${this.apiUrl}/search?${params.toString()}`;
         
         return this.http.get<Client[]>(searchUrl).pipe(
             tap(clients => {
                 console.log('Clients search completed:', clients.length, 'results for:', name);
+            }),
+            catchError(this.handleError.bind(this)),
+            finalize(() => this.setLoading(false))
+        );
+    }
+
+    /**
+     * Gets all clients without pagination (for lookups/dropdowns)
+     * @returns Observable of all Client array
+     */
+    getAllClients(): Observable<Client[]> {
+        this.setLoading(true);
+        this.clearError();
+        
+        const params = new URLSearchParams();
+        params.append('page', '0');
+        params.append('size', '1000'); // Large number to get all clients
+        
+        const url = `${this.apiUrl}?${params.toString()}`;
+        
+        return this.http.get<Client[]>(url).pipe(
+            tap(clients => {
+                console.log('All clients loaded successfully:', clients.length);
             }),
             catchError(this.handleError.bind(this)),
             finalize(() => this.setLoading(false))

@@ -1,0 +1,168 @@
+<!-- Authentication Page - Login & Signup -->
+<div class="container-fluid px-4 px-lg-4 py-4 py-lg-5">
+  <div class="row justify-content-center">
+    <div class="col-xl-4 col-lg-5 col-md-6 col-sm-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-3 p-lg-4">
+          
+          <!-- App Logo/Title -->
+          <div class="text-center mb-3">
+            <img src="/logo.png" alt="Logo" class="mb-2" style="max-height: 45px;" />
+            <p class="text-muted small">{{ isLoginMode ? 'Sign in to your account' : 'Create your account' }}</p>
+          </div>
+
+          <!-- Login Form -->
+          <form *ngIf="isLoginMode" [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" novalidate>
+          
+            <div class="mb-3">
+              <label for="loginEmail" class="form-label fw-medium small">Email Address</label>
+              <input 
+                type="email" 
+                name="email"
+                class="form-control form-control-sm"
+                [class.is-invalid]="hasLoginError('email')"
+                id="loginEmail"
+                formControlName="email"
+                placeholder="Enter your Email"
+                autocomplete="email"
+              >
+              <div *ngIf="hasLoginError('email')" class="invalid-feedback">
+                {{ getLoginErrorMessage('email') }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label fw-medium small">Password</label>
+              <div class="input-group">
+                <input 
+                  name="password"
+                  [type]="showLoginPassword ? 'text' : 'password'" 
+                  class="form-control form-control-sm"
+                  [class.is-invalid]="hasLoginError('password')"
+                  id="loginPassword"
+                  formControlName="password"
+                  placeholder="Enter your Password"
+                  autocomplete="current-password"
+                 >
+                <button 
+                  class="btn btn-outline-secondary btn-sm" 
+                  type="button"
+                  (click)="toggleLoginPasswordVisibility()"
+                  [attr.aria-label]="showLoginPassword ? 'Hide password' : 'Show password'">
+                  <i class="bi" [class.bi-eye]="!showLoginPassword" [class.bi-eye-slash]="showLoginPassword"></i>
+                </button>
+              </div>
+              <div *ngIf="hasLoginError('password')" class="invalid-feedback">
+                {{ getLoginErrorMessage('password') }}
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button 
+                type="submit" 
+                class="btn btn-primary btn-sm"
+                [disabled]="isLoading">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <i *ngIf="!isLoading" class="bi bi-box-arrow-in-right me-2"></i>
+                {{ isLoading ? 'Signing in...' : 'Sign In' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Signup Form -->
+          <form *ngIf="!isLoginMode" [formGroup]="signupForm" (ngSubmit)="onSignupSubmit()" novalidate autocomplete="off">
+            <div class="mb-3">
+              <label for="signupName" class="form-label fw-medium small">Full Name</label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm"
+                [class.is-invalid]="hasSignupError('name')"
+                id="signupName"
+                formControlName="name"
+                placeholder="Enter your Full Name"
+                autocomplete="off">
+              <div *ngIf="hasSignupError('name')" class="invalid-feedback">
+                {{ getSignupErrorMessage('name') }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="signupEmail" class="form-label fw-medium small">Email Address</label>
+              <input 
+                type="email" 
+                class="form-control form-control-sm"
+                [class.is-invalid]="hasSignupError('email')"
+                id="signupEmail"
+                formControlName="email"
+                placeholder="Enter your Email"
+                autocomplete="off">
+              <div *ngIf="hasSignupError('email')" class="invalid-feedback">
+                {{ getSignupErrorMessage('email') }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="signupPassword" class="form-label fw-medium small">Password</label>
+              <div class="input-group">
+                <input 
+                  [type]="showSignupPassword ? 'text' : 'password'" 
+                  class="form-control form-control-sm"
+                  [class.is-invalid]="hasSignupError('password')"
+                  id="signupPassword"
+                  formControlName="password"
+                  placeholder="Enter your Password"
+                  autocomplete="off">
+                <button 
+                  class="btn btn-outline-secondary btn-sm" 
+                  type="button"
+                  (click)="toggleSignupPasswordVisibility()"
+                  [attr.aria-label]="showSignupPassword ? 'Hide password' : 'Show password'">
+                  <i class="bi" [class.bi-eye]="!showSignupPassword" [class.bi-eye-slash]="showSignupPassword"></i>
+                </button>
+              </div>
+              <div *ngIf="hasSignupError('password')" class="invalid-feedback">
+                {{ getSignupErrorMessage('password') }}
+              </div>
+              <div class="form-text">
+                <small class="text-muted">Password must be at least 6 characters long</small>
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button 
+                type="submit" 
+                class="btn btn-primary btn-sm"
+                [disabled]="isLoading">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <i *ngIf="!isLoading" class="bi bi-person-plus me-2"></i>
+                {{ isLoading ? 'Creating account...' : 'Create Account' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Toggle Mode -->
+          <div class="text-center mt-3">
+            <hr class="my-3">
+            <p class="text-muted mb-2 small">
+              {{ isLoginMode ? "Don't have an account?" : "Already have an account?" }}
+            </p>
+            <button 
+              type="button" 
+              class="btn btn-outline-primary btn-sm"
+              (click)="toggleMode()"
+              [disabled]="isLoading">
+              <i class="bi bi-{{ isLoginMode ? 'person-plus' : 'box-arrow-in-right' }} me-2"></i>
+              {{ isLoginMode ? 'Create Account' : 'Sign In' }}
+            </button>
+          </div>
+      
+      <!-- Footer -->
+      <div class="text-center mt-3">
+        <p class="text-muted small">
+          <i class="bi bi-shield-check me-1"></i>
+          Your data is secure and protected
+        </p>
+      </div>
+    </div>
+  </div>
+</div> 

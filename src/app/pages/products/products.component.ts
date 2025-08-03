@@ -1,278 +1,314 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
-import { AddProductModalComponent } from '../../components/add-product-modal/add-product-modal.component';
-import { LoadingSpinnerComponent } from '../../components/shared/loading-spinner/loading-spinner.component';
-import { ErrorDisplayComponent } from '../../components/shared/error-display/error-display.component';
-import { SearchPanelComponent, SearchField, SearchCriteria } from '../../components/shared/search-panel/search-panel.component';
-import { Product, ProductRequest, ProductSearchRequest, ProductUpdateRequest } from '../../models/product.model';
-import { Client } from '../../models/client.model';
+import { Subject, takeUntil, Observable } from 'rxjs';
 import { ProductService } from '../../services/product.service';
 import { ClientService } from '../../services/client.service';
+import { RoleService } from '../../services/role.service';
+import { Product, ProductSearchRequest, ProductUpdateRequest } from '../../models/product.model';
+import { Client } from '../../models/client.model';
+import { LoadingSpinnerComponent } from '../../components/shared/loading-spinner/loading-spinner.component';
+import { ErrorDisplayComponent } from '../../components/shared/error-display/error-display.component';
+import { SearchPanelComponent, SearchField } from '../../components/shared/search-panel/search-panel.component';
+import { PaginationComponent } from '../../components/shared/pagination/pagination.component';
+import { AddProductModalComponent } from '../../components/add-product-modal/add-product-modal.component';
 import { ToastService } from '../../services/toast.service';
 
 /**
- * Products Component for managing products
- * Handles CRUD operations with proper loading states and error handling
+ * Products management component
+ * Handles product listing, searching, and editing with role-based access control
  */
 @Component({
   selector: 'app-products',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    AddProductModalComponent,
+    CommonModule,
+    FormsModule,
     LoadingSpinnerComponent,
     ErrorDisplayComponent,
-    SearchPanelComponent
+    SearchPanelComponent,
+    PaginationComponent,
+    AddProductModalComponent
   ],
   templateUrl: './products.component.html',
-  styleUrl: './products.component.css'
+  styleUrls: ['./products.component.css']
 })
 export class ProductsComponent implements OnInit, OnDestroy {
+  // Data properties
   products: Product[] = [];
+  allProducts: Product[] = []; // Store all products for client filtering
   clients: Client[] = [];
+  
+  // UI state
   showModal = false;
-  editingProduct: { [key: number]: boolean } = {};
-  editingName: { [key: number]: string } = {};
-  editingMrp: { [key: number]: number | null } = {};
-  editingErrors: { [key: number]: string } = {};
-
-  // Search configuration
+  selectedClientId: number | null = null;
+  
+  // Button disabling state for error handling
+  addButtonDisabled = false;
+  
+  // Pagination properties
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
+  currentSearchRequest: ProductSearchRequest = { barcode: '', productName: '', clientId: undefined };
+  
+  // Search functionality - using compatible SearchField interface
   searchFields: SearchField[] = [
-    {
-      key: 'barcode',
-      label: 'Barcode',
-      placeholder: 'Search by Barcode',
-      type: 'text'
-    },
-    {
-      key: 'productName',
-      label: 'Product Name',
-      placeholder: 'Search by Product Name',
-      type: 'text'
-    }
+    { key: 'barcode', label: 'Barcode', type: 'text', placeholder: 'Search by Barcode' },
+    { key: 'productName', label: 'Product Name', type: 'text', placeholder: 'Search by Product Name' }
   ];
-
-  // Custom search fields for client dropdown
-  selectedClientId: string = '';
-
-  // Component destruction subject for cleanup
+  
+  // Inline editing state
+  editingProductId: number | null = null;
+  editingName: { [key: number]: string } = {};
+  editingMrp: { [key: number]: number } = {};
+  editingNameErrors: { [key: number]: string } = {};
+  editingMrpErrors: { [key: number]: string } = {};
+  
+  // Component cleanup
   private destroy$ = new Subject<void>();
+  
+  // Observable streams for template
+  loading$: Observable<boolean>;
+  error$: Observable<string>;
 
   constructor(
     private productService: ProductService,
     private clientService: ClientService,
+    public roleService: RoleService, // Made public for template access
     private toastService: ToastService
-  ) {}
-
-  ngOnInit() {
-    this.loadClients();
-    this.loadProducts();
+  ) {
+    // Initialize observables in constructor
+    this.loading$ = this.productService.loading$;
+    this.error$ = this.productService.error$;
   }
 
-  ngOnDestroy() {
+  ngOnInit(): void {
+    this.loadInitialData();
+  }
+
+  ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   /**
-   * Loads all clients for the search dropdown
+   * Disables the add button temporarily when errors occur
+   * @param duration - Duration in milliseconds to disable the button (default: 5 seconds)
    */
-  loadClients() {
-    this.clientService.getClients()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (clients: Client[]) => {
-          this.clients = clients;
-        },
-        error: (error: any) => {
-          console.error('Error loading clients:', error);
-        }
-      });
+  private disableAddButtonTemporarily(duration: number = 5000): void {
+    this.addButtonDisabled = true;
+    setTimeout(() => {
+      this.addButtonDisabled = false;
+    }, duration);
   }
 
   /**
-   * Loads all products from the API
+   * Load initial data (products and clients)
    */
-  loadProducts() {
-    const searchRequest: ProductSearchRequest = {};
-    this.productService.searchProducts(searchRequest)
+  private loadInitialData(): void {
+    // Load clients first
+    this.clientService.getAllClients()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (products: Product[]) => {
-          this.products = products;
-          this.toastService.showSuccess(`Loaded ${products.length} products successfully`);
+        next: (clients) => {
+          this.clients = clients;
         },
-        error: (error: any) => {
-          this.toastService.showError('Failed to load products. Please try again.');
+        error: (error) => {
+          // Extract the exact error message from backend
+          let errorMessage = 'Failed to load clients.';
+          if (error && error.message) {
+            errorMessage = error.message;
+          }
+          this.toastService.showError(errorMessage);
+          console.error('Error loading clients:', error);
+        }
+      });
+
+    // Load products
+    this.loadProducts();
+  }
+
+  /**
+   * Load products using empty search criteria with pagination
+   */
+  private loadProducts(): void {
+    const page = this.currentPage - 1; // Convert to 0-based for API
+    this.productService.searchProducts(this.currentSearchRequest, page, this.pageSize)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (products) => {
+          this.allProducts = products; // Store all products
+          this.applyClientFilter(); // Apply client filter to the loaded products
+          // Update total items based on filtered products
+          this.updateTotalItems();
+        },
+        error: (error) => {
+          // Extract the exact error message from backend
+          let errorMessage = 'Failed to load products. Please try again.';
+          if (error && error.message) {
+            errorMessage = error.message;
+          }
+          this.toastService.showError(errorMessage);
           console.error('Error loading products:', error);
         }
       });
   }
 
   /**
-   * Gets client name by client ID
-   * @param clientId - The client ID to get name for
-   * @returns Client name or 'Unknown Client'
+   * Handle search from search panel
+   * @param searchData - Search criteria from search panel
    */
-  getClientName(clientId: number): string {
-    const client = this.clients.find(c => c.clientId === clientId);
-    return client ? client.name : 'Unknown Client';
+  onSearch(searchData: any): void {
+    this.currentSearchRequest = {
+      barcode: searchData.barcode || '',
+      productName: searchData.productName || '',
+      clientId: undefined // Don't send clientId to backend
+    };
+    this.currentPage = 1; // Reset to first page when searching
+    this.loadProducts();
   }
 
   /**
-   * Starts editing mode for a product
-   * @param product - The product to edit
+   * Handle clear search
    */
-  startEdit(product: Product) {
-    this.editingProduct[product.id] = true;
-    this.editingName[product.id] = product.name;
-    this.editingMrp[product.id] = product.mrp;
-    this.editingErrors[product.id] = '';
+  onClearSearch(): void {
+    this.selectedClientId = null;
+    this.currentSearchRequest = { barcode: '', productName: '', clientId: undefined };
+    this.currentPage = 1;
+    this.loadProducts();
   }
 
   /**
-   * Cancels editing mode for a product
-   * @param productId - The product ID to cancel editing for
+   * Handle client filter change
    */
-  cancelEdit(productId: number) {
-    this.editingProduct[productId] = false;
-    delete this.editingName[productId];
-    delete this.editingMrp[productId];
-    delete this.editingErrors[productId];
+  onClientFilterChange(): void {
+    this.applyClientFilter();
   }
 
   /**
-   * Validates the editing data for a product
-   * @param productId - The product ID being edited
+   * Apply client filter to the loaded products
    */
-  validateEditingData(productId: number): void {
-    const name = this.editingName[productId];
-    const mrp = this.editingMrp[productId];
-    const trimmedName = name ? name.trim() : '';
-    
-    if (trimmedName.length === 0) {
-      this.editingErrors[productId] = 'Product name cannot be empty';
-    } else if (trimmedName.length > 255) {
-      this.editingErrors[productId] = 'Product name cannot exceed 255 characters';
-    } else if (!mrp || mrp <= 0) {
-      this.editingErrors[productId] = 'MRP must be a positive number';
+  private applyClientFilter(): void {
+    if (this.selectedClientId === null) {
+      // Show all products from current page
+      this.products = [...this.allProducts];
     } else {
-      this.editingErrors[productId] = '';
+      // Filter products by selected client from current page
+      this.products = this.allProducts.filter(product => product.clientId === this.selectedClientId);
+    }
+    // For client filtering, we need to load all products to get accurate count
+    if (this.selectedClientId !== null) {
+      this.loadAllProductsForClientFilter();
+    } else {
+      this.updateTotalItems();
     }
   }
 
   /**
-   * Checks if the current edit is valid
-   * @param productId - The product ID being edited
-   * @returns boolean indicating if the edit is valid
+   * Clear client filter
    */
-  isValidEdit(productId: number): boolean {
-    const name = this.editingName[productId];
-    const mrp = this.editingMrp[productId];
-    const trimmedName = name ? name.trim() : '';
-    return trimmedName.length > 0 && trimmedName.length <= 255 && 
-           (mrp !== null && mrp > 0) && !this.editingErrors[productId];
+  clearClientFilter(): void {
+    this.selectedClientId = null;
+    this.applyClientFilter();
   }
 
   /**
-   * Saves the edited product data
-   * @param product - The product being edited
+   * Load all products for client filtering (when client is selected)
    */
-  saveEdit(product: Product) {
-    const newName = this.editingName[product.id];
-    const newMrp = this.editingMrp[product.id];
-    this.validateEditingData(product.id);
-    
-    if (!this.isValidEdit(product.id)) {
-      return;
-    }
-    
-    const trimmedName = newName.trim();
-    if (trimmedName !== product.name || newMrp !== product.mrp) {
-      const request: ProductUpdateRequest = {
-        name: trimmedName,
-        mrp: newMrp!,
-        imageUrl: product.imageUrl
-      };
-      
-      this.productService.updateProduct(product.id, request)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (updatedProduct: Product) => {
-            const index = this.products.findIndex(p => p.id === product.id);
-            if (index !== -1) {
-              this.products[index] = updatedProduct;
-            }
-            this.editingProduct[product.id] = false;
-            delete this.editingName[product.id];
-            delete this.editingMrp[product.id];
-            delete this.editingErrors[product.id];
-            this.toastService.showSuccess('Product updated successfully');
-          },
-          error: (error: any) => {
-            this.toastService.showError('Failed to update product. Please try again.');
-            console.error('Error updating product:', error);
+  private loadAllProductsForClientFilter(): void {
+    this.productService.getAllProducts()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (allProducts) => {
+          // Filter all products by selected client
+          this.products = allProducts.filter(product => product.clientId === this.selectedClientId);
+          this.totalItems = this.products.length;
+          this.currentPage = 1; // Reset to first page
+        },
+        error: (error) => {
+          let errorMessage = 'Failed to load products for client filter.';
+          if (error && error.message) {
+            errorMessage = error.message;
           }
-        });
+          this.toastService.showError(errorMessage);
+          console.error('Error loading products for client filter:', error);
+        }
+      });
+  }
+
+  /**
+   * Update total items for pagination based on filtered products
+   */
+  private updateTotalItems(): void {
+    // For frontend filtering, we need to get the total count from backend
+    // Since we're only loading one page at a time, we'll estimate based on current results
+    if (this.products.length < this.pageSize) {
+      this.totalItems = (this.currentPage - 1) * this.pageSize + this.products.length;
     } else {
-      this.cancelEdit(product.id);
+      this.totalItems = this.currentPage * this.pageSize + 1;
     }
   }
 
   /**
-   * Handles new product addition from modal
-   * @param productRequest - The product data to add
+   * Handle product added from modal
+   * @param productRequest - New product request from modal
    */
-  onProductAdded(productRequest: ProductRequest) {
+  onProductAdded(productRequest: any): void {
+    // Create the product via service
     this.productService.createProduct(productRequest)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (newProduct: Product) => {
-          this.products.push(newProduct);
+        next: (newProduct) => {
+          // Add to all products
+          this.allProducts.unshift(newProduct);
+          
+          // If client filter is applied, check if the new product matches
+          if (this.selectedClientId !== null) {
+            if (newProduct.clientId === this.selectedClientId) {
+              this.products.unshift(newProduct);
+              this.totalItems++;
+            }
+          } else {
+            this.products.unshift(newProduct);
+          }
+          
           this.showModal = false;
           this.toastService.showSuccess('Product added successfully');
         },
-        error: (error: any) => {
-          this.toastService.showError('Failed to add product. Please try again.');
-          console.error('Error adding product:', error);
+        error: (error) => {
+          // Extract the exact error message from backend
+          let errorMessage = 'Failed to add product. Please try again.';
+          if (error && error.message) {
+            errorMessage = error.message;
+          }
+          this.toastService.showError(errorMessage);
+          this.disableAddButtonTemporarily();
+          console.error('Error creating product:', error);
         }
       });
   }
 
   /**
-   * Handles bulk product upload from modal
-   * @param file - The TSV file to upload
+   * Handle products uploaded from modal
    */
-  onProductsUploaded(file: File) {
-    this.productService.uploadProductsTsv(file)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (newProducts: Product[]) => {
-          this.products.push(...newProducts);
-          this.showModal = false;
-          this.toastService.showSuccess(`${newProducts.length} products uploaded successfully`);
-        },
-        error: (error: any) => {
-          this.toastService.showError('Failed to upload products. Please try again.');
-          console.error('Error uploading products:', error);
-        }
-      });
+  onProductsUploaded(): void {
+    this.loadProducts(); // Reload all products to show uploaded ones
+    this.showModal = false;
   }
 
   /**
-   * Checks if a product is currently being edited
-   * @param productId - The product ID to check
-   * @returns boolean indicating if the product is being edited
+   * Get client name by ID
+   * @param clientId - Client ID
+   * @returns Client name or 'Unknown'
    */
-  isEditing(productId: number): boolean {
-    return this.editingProduct[productId] || false;
+  getClientName(clientId: number): string {
+    const client = this.clients.find(c => c.clientId === clientId);
+    return client ? client.name : 'Unknown';
   }
 
   /**
-   * Retry loading products when an error occurs
+   * Retry loading products
    */
   retryLoadProducts(): void {
     this.productService.clearErrorState();
@@ -280,91 +316,218 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handles search criteria from the search panel
-   * @param criteria - Search criteria containing the search parameters
+   * Handle page change events from pagination component
+   * @param page - New page number
    */
-  onSearch(criteria: SearchCriteria): void {
-    const searchRequest: ProductSearchRequest = {};
-    
-    if (criteria['barcode']) {
-      searchRequest.barcode = criteria['barcode'] as string;
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    // If client filter is applied, we need to handle pagination differently
+    if (this.selectedClientId !== null) {
+      // For client filtering, we have all products loaded, so we need to implement frontend pagination
+      this.applyFrontendPagination();
+    } else {
+      this.loadProducts();
     }
-    if (criteria['clientId']) {
-      searchRequest.clientId = parseInt(criteria['clientId'] as string);
-    }
-    if (criteria['productName']) {
-      searchRequest.productName = criteria['productName'] as string;
-    }
+  }
 
-    this.productService.searchProducts(searchRequest)
+  /**
+   * Apply frontend pagination when client filter is active
+   */
+  private applyFrontendPagination(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    
+    // Get all products for the selected client
+    this.productService.getAllProducts()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (products: Product[]) => {
-          this.products = products;
-          this.toastService.showSuccess(`Found ${products.length} product(s) matching your criteria`);
+        next: (allProducts) => {
+          const filteredProducts = allProducts.filter(product => product.clientId === this.selectedClientId);
+          this.totalItems = filteredProducts.length;
+          this.products = filteredProducts.slice(startIndex, endIndex);
         },
-        error: (error: any) => {
-          this.toastService.showError('Failed to search products. Please try again.');
-          console.error('Error searching products:', error);
-        }
-      });
-  }
-
-  /**
-   * Handles clear search from the search panel
-   * Reloads all products when search is cleared
-   */
-  onClearSearch(): void {
-    this.loadProducts();
-  }
-
-  /**
-   * Handles client filter change
-   * Filters products by selected client
-   */
-  onClientFilterChange(): void {
-    const searchRequest: ProductSearchRequest = {};
-    
-    if (this.selectedClientId) {
-      searchRequest.clientId = parseInt(this.selectedClientId);
-    }
-
-    this.productService.searchProducts(searchRequest)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (products: Product[]) => {
-          this.products = products;
-          if (this.selectedClientId) {
-            const clientName = this.getClientName(parseInt(this.selectedClientId));
-            this.toastService.showSuccess(`Found ${products.length} product(s) for client: ${clientName}`);
-          } else {
-            this.toastService.showSuccess(`Loaded ${products.length} products successfully`);
+        error: (error) => {
+          let errorMessage = 'Failed to load products for pagination.';
+          if (error && error.message) {
+            errorMessage = error.message;
           }
+          this.toastService.showError(errorMessage);
+          console.error('Error loading products for pagination:', error);
+        }
+      });
+  }
+
+  // Inline editing methods
+  /**
+   * Check if product is being edited
+   * @param productId - Product ID
+   * @returns boolean
+   */
+  isEditing(productId: number): boolean {
+    return this.editingProductId === productId;
+  }
+
+  /**
+   * Start editing a product
+   * @param product - Product to edit
+   */
+  startEdit(product: Product): void {
+    this.editingProductId = product.id;
+    this.editingName[product.id] = product.name;
+    this.editingMrp[product.id] = product.mrp;
+    this.editingNameErrors[product.id] = '';
+    this.editingMrpErrors[product.id] = '';
+  }
+
+  /**
+   * Cancel editing
+   * @param productId - Product ID
+   */
+  cancelEdit(productId: number): void {
+    this.editingProductId = null;
+    delete this.editingName[productId];
+    delete this.editingMrp[productId];
+    delete this.editingNameErrors[productId];
+    delete this.editingMrpErrors[productId];
+  }
+
+  /**
+   * Save edited product
+   * @param product - Product being edited
+   */
+  saveEdit(product: Product): void {
+    if (!this.isValidEdit(product.id)) {
+      return;
+    }
+
+    const updateRequest: ProductUpdateRequest = {
+      name: this.editingName[product.id],
+      mrp: this.editingMrp[product.id],
+      imageUrl: product.imageUrl
+    };
+
+    this.productService.updateProduct(product.id, updateRequest)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedProduct) => {
+          // Update product in all products list
+          const allProductsIndex = this.allProducts.findIndex(p => p.id === product.id);
+          if (allProductsIndex !== -1) {
+            this.allProducts[allProductsIndex] = updatedProduct;
+          }
+          
+          // Update product in current products list if it exists
+          const index = this.products.findIndex(p => p.id === product.id);
+          if (index !== -1) {
+            this.products[index] = updatedProduct;
+          }
+          
+          this.cancelEdit(product.id);
+          this.toastService.showSuccess('Product updated successfully');
         },
-        error: (error: any) => {
-          this.toastService.showError('Failed to filter products. Please try again.');
-          console.error('Error filtering products:', error);
+        error: (error) => {
+          // Extract the exact error message from backend
+          let errorMessage = 'Failed to update product. Please try again.';
+          if (error && error.message) {
+            errorMessage = error.message;
+          }
+          this.toastService.showError(errorMessage);
+          console.error('Error updating product:', error);
         }
       });
   }
 
   /**
-   * Handles image error by hiding the image element
-   * @param event - The error event
+   * Validate editing data
+   * @param productId - Product ID
    */
-  onImageError(event: Event): void {
-    const target = event.target as HTMLImageElement;
-    if (target) {
-      target.style.display = 'none';
+  validateEditingData(productId: number): void {
+    const name = this.editingName[productId];
+    const mrp = this.editingMrp[productId];
+
+    // Validate name
+    if (!name || name.trim().length === 0) {
+      this.editingNameErrors[productId] = 'Name is required';
+    } else if (name.trim().length > 50) {
+      this.editingNameErrors[productId] = 'Name cannot exceed 50 characters';
+    } else {
+      this.editingNameErrors[productId] = '';
+    }
+
+    // Validate MRP
+    if (!mrp || mrp <= 0 || !this.isValidNumber(mrp.toString())) {
+      this.editingMrpErrors[productId] = 'MRP must be a positive number';
+    } else if (mrp > 999999) {
+      this.editingMrpErrors[productId] = 'MRP cannot exceed 999,999';
+    } else {
+      this.editingMrpErrors[productId] = '';
     }
   }
 
-  // Observable streams from service
-  get loading$() {
-    return this.productService.loading$;
+  /**
+   * Check if edit is valid
+   * @param productId - Product ID
+   * @returns boolean
+   */
+  isValidEdit(productId: number): boolean {
+    this.validateEditingData(productId);
+    return !this.editingNameErrors[productId] && !this.editingMrpErrors[productId];
   }
-  
-  get error$() {
-    return this.productService.error$;
+
+  /**
+   * Validates if a string represents a valid number without scientific notation
+   * @param value - String to validate
+   * @returns boolean indicating if the value is a valid number
+   */
+  private isValidNumber(value: string): boolean {
+    if (!value || value.trim() === '') return false;
+    
+    // Check for scientific notation
+    if (/[eE]/.test(value)) return false;
+    
+    // Check if it's a valid number
+    const num = parseFloat(value);
+    return !isNaN(num) && isFinite(num);
+  }
+
+  /**
+   * Handles keydown events for number inputs to prevent invalid characters
+   * @param event - Keyboard event
+   */
+  onNumberKeyDown(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+    const key = event.key;
+    
+    // Allow control keys
+    if (allowedKeys.includes(key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+    
+    // Allow digits and decimal point
+    if (!/[0-9.]/.test(key)) {
+      event.preventDefault();
+      return;
+    }
+    
+    // Prevent multiple decimal points
+    const input = event.target as HTMLInputElement;
+    if (key === '.' && input.value.includes('.')) {
+      event.preventDefault();
+      return;
+    }
+    
+    // Prevent scientific notation (e, E, +, -)
+    if (['e', 'E', '+', '-'].includes(key)) {
+      event.preventDefault();
+      return;
+    }
+  }
+
+  /**
+   * Handle image error
+   * @param event - Error event
+   */
+  onImageError(event: any): void {
+    event.target.src = '/assets/images/no-image.png';
   }
 } 

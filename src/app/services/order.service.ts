@@ -13,6 +13,7 @@ import { OrderResponse, OrderItemForm, OrderSearchRequest } from "../models/orde
 export class OrderService {
     private apiUrl = 'http://localhost:9000/orders';
     private invoiceApiUrl = 'http://localhost:9000/invoice';
+    private productsApiUrl = 'http://localhost:9000/products';
     
     // Loading state management
     private loadingSubject = new BehaviorSubject<boolean>(false);
@@ -25,11 +26,13 @@ export class OrderService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Searches orders based on search criteria
+     * Searches orders based on search criteria with pagination
      * @param searchRequest - Search criteria
+     * @param page - Page number (0-based)
+     * @param size - Page size
      * @returns Observable of OrderResponse array
      */
-    searchOrders(searchRequest: OrderSearchRequest): Observable<OrderResponse[]> {
+    searchOrders(searchRequest: OrderSearchRequest, page: number = 0, size: number = 10): Observable<OrderResponse[]> {
         this.setLoading(true);
         this.clearError();
         
@@ -43,8 +46,10 @@ export class OrderService {
         if (searchRequest.orderId) {
             params.append('order-id', searchRequest.orderId.toString());
         }
+        params.append('page', page.toString());
+        params.append('size', size.toString());
         
-        const url = params.toString() ? `${this.apiUrl}?${params.toString()}` : this.apiUrl;
+        const url = `${this.apiUrl}?${params.toString()}`;
         
         return this.http.get<OrderResponse[]>(url).pipe(
             tap(orders => {
@@ -92,6 +97,24 @@ export class OrderService {
     }
 
     /**
+     * Validates barcode existence in the backend
+     * @param barcode - Barcode to validate
+     * @returns Observable of boolean indicating if barcode exists
+     */
+    validateBarcode(barcode: string): Observable<boolean> {
+        this.clearError();
+        
+        const url = `${this.productsApiUrl}/check/${barcode}`;
+        
+        return this.http.get<boolean>(url).pipe(
+            tap(isValid => {
+                console.log('Barcode validation result:', isValid);
+            }),
+            catchError(this.handleError.bind(this))
+        );
+    }
+
+    /**
      * Generates invoice for an order
      * @param orderId - Order ID
      * @returns Observable of invoice generation response
@@ -100,7 +123,9 @@ export class OrderService {
         this.setLoading(true);
         this.clearError();
         
-        return this.http.get<string>(`${this.invoiceApiUrl}/generate-invoice/${orderId}`).pipe(
+        return this.http.get(`${this.invoiceApiUrl}/generate-invoice/${orderId}`, { 
+            responseType: 'text' 
+        }).pipe(
             tap(response => {
                 console.log('Invoice generated successfully:', response);
             }),
@@ -170,19 +195,33 @@ export class OrderService {
     private handleError(error: HttpErrorResponse): Observable<never> {
         let errorMessage = 'An unexpected error occurred';
         
+        // Don't handle 401 errors here - they're handled by the interceptor
+        if (error.status === 401) {
+            return throwError(() => error);
+        }
+        
         if (error.error instanceof ErrorEvent) {
             // Client-side error
             errorMessage = `Client Error: ${error.error.message}`;
         } else {
-            // Server-side error
-            errorMessage = `Server Error: ${error.status} - ${error.message}`;
-            
-            if (error.status === 404) {
-                errorMessage = 'Resource not found';
-            } else if (error.status === 500) {
-                errorMessage = 'Internal server error';
-            } else if (error.status === 0) {
-                errorMessage = 'Unable to connect to server';
+            // Check if it's a structured error response from backend
+            if (error.error && typeof error.error === 'object' && error.error.message) {
+                // Extract the exact message from backend structured error
+                errorMessage = error.error.message;
+            } else if (error.error && typeof error.error === 'string') {
+                // If error is a string, use it directly
+                errorMessage = error.error;
+            } else {
+                // Fallback to generic server error
+                errorMessage = `Server Error: ${error.status} - ${error.message}`;
+                
+                if (error.status === 404) {
+                    errorMessage = 'Resource not found';
+                } else if (error.status === 500) {
+                    errorMessage = 'Internal server error';
+                } else if (error.status === 0) {
+                    errorMessage = 'Unable to connect to server';
+                }
             }
         }
         

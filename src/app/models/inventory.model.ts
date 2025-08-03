@@ -19,4 +19,18 @@ export interface InventoryForm {
 
 export interface InventorySearchRequest {
     productName?: string;
+    barcode?: string;
+}
+
+export interface InventoryUploadResponse {
+    status: 'success' | 'error';
+    tsvBase64?: string;
+    filename?: string;
+}
+
+export interface InventoryUploadErrorResponse {
+    error: string;
+    message: string;
+    timestamp: string;
+    path: string;
 } 

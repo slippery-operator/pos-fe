@@ -1,13 +1,21 @@
 <div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
-  <div class="row d-flex align-items-center mb-3">
-    <div class="col-9 col-md-9 d-flex justify-content-start">
-      <h2 class="fs-4 mb-0">Inventory Management System</h2>
-    </div>
-    <div class="col col-md-3 d-flex justify-content-start justify-content-md-end fs-4 mt-3 mt-md-0">
-      <button class="btn btn-primary btn-sm w-md-auto" (click)="showUploadModal = true">
-        <i class="bi bi-upload me-2"></i>
-        Upload Inventory
-      </button>
+  <div class="page-header">
+    <div class="row">
+      <div class="col-12 col-md-8">
+        <h2>Inventory Management System</h2>
+      </div>
+      <div class="col-12 col-md-4" *ngIf="roleService.canUpload() | async">
+        <div class="btn-container">
+          <!-- Only supervisors can upload inventory -->
+          <button 
+            class="btn btn-primary btn-sm" 
+            (click)="showUploadModal = true"
+            [disabled]="(loading$ | async) || uploadButtonDisabled">
+            <i class="bi bi-upload me-2"></i>
+            Upload Inventory
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -22,12 +30,12 @@
   </app-search-panel>
 
   <!-- Error Display Component -->
-  <app-error-display 
+  <!-- <app-error-display 
     [showError]="(error$ | async) ? true : false"
     [errorMessage]="(error$ | async) || ''"
     [showRetryButton]="true"
     (onRetry)="retryLoadInventory()">
-  </app-error-display>
+  </app-error-display> -->
 
   <!-- Loading Spinner -->
   <div *ngIf="loading$ | async" class="text-center py-5">
@@ -52,15 +60,19 @@
       <table class="table table-hover table-borderless text-start">
         <thead class="table-primary">
           <tr>
-            <th scope="col" style="width: 60%" class="ps-4">Product Name</th>
-            <th scope="col" style="width: 20%">Quantity</th>
-            <th scope="col" style="width: 20%">Actions</th>
+            <th scope="col" class="col-3 ps-4">Barcode</th>
+            <th scope="col" [class]="(roleService.canCreate() | async) ? 'col-4' : 'col-6'">Product Name</th>
+            <th scope="col" [class]="(roleService.canCreate() | async) ? 'col-2' : 'col-3'">Quantity</th>
+            <th scope="col" class="col-3" *ngIf="roleService.canCreate() | async">Actions</th>
           </tr>
         </thead>
         <tbody class="border-top">
           <tr *ngFor="let item of inventory" class="align-middle">
             <td class="ps-4">
-              <span class="">{{ getProductName(item.productId) }}</span>
+              <span class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ getProductBarcode(item.productId) }}">{{ getProductBarcode(item.productId) }}</span>
+            </td>
+            <td>
+              <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ getProductName(item.productId) }}">{{ getProductName(item.productId) }}</span>
             </td>
             <td>
               <!-- Display mode -->
@@ -75,7 +87,8 @@
                   [(ngModel)]="editingQuantity[item.id]"
                   (keyup.enter)="saveEdit(item)"
                   (keyup.escape)="cancelEdit(item.id)"
-                  (input)="validateEditingData(item.id)">
+                  (input)="validateEditingData(item.id)"
+                  (keydown)="onQuantityKeyDown($event)">
                 
                 <!-- Bootstrap validation feedback -->
                 <div class="invalid-feedback" *ngIf="editingErrors[item.id]">
@@ -83,7 +96,7 @@
                 </div>
               </div>
             </td>
-            <td class="text-nowrap">
+            <td class="text-nowrap" *ngIf="roleService.canCreate() | async">
               <!-- View mode buttons -->
               <div class="d-flex gap-1" *ngIf="!isEditing(item.id)">
                 <button class="btn btn-outline-primary btn-sm" (click)="startEdit(item)">
@@ -111,11 +124,21 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination Component -->
+    <div class="d-flex justify-content-center mt-4" *ngIf="!(loading$ | async)">
+      <app-pagination
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [totalItems]="totalItems"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    </div>
   </div>
 
   <!-- Upload Modal component -->
   <app-upload-inventory-modal 
     [(show)]="showUploadModal" 
-    (inventoryUploaded)="onInventoryUploaded($event)">
+    (inventoryUploaded)="onInventoryUploaded()">
   </app-upload-inventory-modal>
 </div> 

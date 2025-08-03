@@ -28,4 +28,17 @@ export interface ProductUpdateRequest {
     name: string;
     mrp: number;
     imageUrl?: string;
+}
+
+export interface ProductUploadResponse {
+    status: 'success' | 'error';
+    tsvBase64?: string;
+    filename?: string;
+}
+
+export interface ProductUploadErrorResponse {
+    error: string;
+    message: string;
+    timestamp: string;
+    path: string;
 } 

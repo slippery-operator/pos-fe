@@ -14,12 +14,9 @@ import { Subject, takeUntil } from 'rxjs';
 export class UploadInventoryModalComponent {
   @Input() show: boolean = false;
   @Output() showChange = new EventEmitter<boolean>();
-  @Output() inventoryUploaded = new EventEmitter<any[]>();
+  @Output() inventoryUploaded = new EventEmitter<void>();
 
   selectedFile: File | null = null;
-  uploading = false;
-  showError = false;
-  errorMessage = '';
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -36,34 +33,33 @@ export class UploadInventoryModalComponent {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
-      this.clearError();
     }
   }
 
   uploadFile() {
     if (!this.selectedFile) {
-      this.setError('Please select a file to upload');
+      this.toastService.showError('Please select a file to upload');
       return;
     }
 
-    this.uploading = true;
-    this.clearError();
-    
     this.inventoryService.uploadInventoryTsv(this.selectedFile)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (inventory) => {
-          this.toastService.showSuccess(`Successfully uploaded ${inventory.length} inventory records`);
-          this.inventoryUploaded.emit(inventory);
-          this.closeModal();
+        next: (response) => {
+          if (response.status === 'success') {
+            this.toastService.showSuccess('Inventory upload successful!');
+            this.inventoryUploaded.emit();
+            this.closeModal();
+          } else if (response.status === 'error') {
+            this.toastService.showError('There were problems in file uploaded. Please check response file for more details');
+            // The service already handles downloading the error file
+            // Don't close modal so user can try again
+          }
         },
         error: (error) => {
-          this.setError('Failed to upload inventory file. Please check the file format.');
-          this.toastService.showError('Failed to upload inventory file. Please check the file format.');
+          // This handles other types of errors (network, server errors, etc.)
+          this.toastService.showError(error.message || 'Failed to upload inventory file. Please try again.');
           console.error('Upload error:', error);
-        },
-        complete: () => {
-          this.uploading = false;
         }
       });
   }
@@ -82,7 +78,7 @@ export class UploadInventoryModalComponent {
 
   downloadSampleTsv() {
     // Create sample TSV content
-    const sampleContent = 'productId\tquantity\n1\t100\n2\t50\n3\t75';
+    const sampleContent = 'barcode\tquantity\nABC123\t100\nABC456\t50\nABC789\t75';
     const blob = new Blob([sampleContent], { type: 'text/tab-separated-values' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -94,19 +90,7 @@ export class UploadInventoryModalComponent {
     window.URL.revokeObjectURL(url);
   }
 
-  private setError(message: string): void {
-    this.showError = true;
-    this.errorMessage = message;
-  }
-
-  private clearError(): void {
-    this.showError = false;
-    this.errorMessage = '';
-  }
-
   private resetForm(): void {
     this.selectedFile = null;
-    this.uploading = false;
-    this.clearError();
   }
 } 

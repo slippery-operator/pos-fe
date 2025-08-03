@@ -6,3 +6,5 @@ export interface Client {
 export interface ClientRequest {
     name: string;
 }
+
+// TODO:  create types as: client.type.ts

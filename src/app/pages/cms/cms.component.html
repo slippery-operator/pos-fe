@@ -1,13 +1,21 @@
 <div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
-  <div class="row d-flex align-items-center mb-3">
-    <div class="col-9 col-md-9 d-flex justify-content-start">
-      <h2 class="fs-4 mb-0">Client Management System</h2>
-    </div>
-    <div class="col col-md-3 d-flex justify-content-start justify-content-md-end fs-4 mt-3 mt-md-0">
-      <button class="btn btn-primary btn-sm  w-md-auto" (click)="showModal = true">
-        <i class="bi bi-plus-circle me-2"></i>
-        Add Client
-      </button>
+  <div class="page-header">
+    <div class="row">
+      <div class="col-12 col-md-8">
+        <h2>Client Management System</h2>
+      </div>
+      <div class="col-12 col-md-4" *ngIf="roleService.canCreate() | async">
+        <div class="btn-container">
+          <!-- Only supervisors can add clients -->
+          <button 
+            class="btn btn-primary btn-sm" 
+            (click)="showModal = true"
+            [disabled]="(loading$ | async) || addButtonDisabled">
+            <i class="bi bi-plus-circle me-2"></i>
+            Add Client
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -22,12 +30,12 @@
   </app-search-panel>
 
   <!-- Error Display Component -->
-  <app-error-display 
+  <!-- <app-error-display 
     [showError]="(error$ | async) ? true : false"
     [errorMessage]="(error$ | async) || ''"
     [showRetryButton]="true"
     (onRetry)="retryLoadClients()">
-  </app-error-display>
+  </app-error-display> -->
 
   <!-- Loading Spinner -->
   <div *ngIf="loading$ | async" class="text-center py-5">
@@ -52,18 +60,24 @@
       <table class="table table-hover table-borderless text-start">
         <thead class="table-primary">
           <tr>
-            <!--  TODO: use col- here-->
-            <th scope="col" style="width: 10%" class="ps-4">ID</th>
-            <th scope="col" style="width: 65%">Name</th>
-            <th scope="col" style="width: 25%">Actions</th>
+            <th scope="col" [class]="(roleService.canCreate() | async) ? 'col-1' : 'col-2'" class="ps-4">ID</th>
+            <th scope="col" [class]="(roleService.canCreate() | async) ? 'col-7' : 'col-10'">Name</th>
+            <th scope="col" class="col-4" *ngIf="roleService.canCreate() | async">Actions</th>
           </tr>
         </thead>
         <tbody class="border-top">
           <tr *ngFor="let client of clients" class="align-middle">
             <td class="ps-4">{{ client.clientId }}</td>
-            <td>
+            <!-- <td> -->
               <!-- Display mode -->
-              <span *ngIf="!isEditing(client.clientId)">{{ client.name }}</span>
+              <!-- <span *ngIf="!isEditing(client.clientId)">{{ client.name }}</span> -->
+              <td class="align-middle" style="max-width: 200px;">
+                <div class="d-flex flex-column justify-content-center" style="">
+                  
+                  <!-- Display mode -->
+                  <span *ngIf="!isEditing(client.clientId)" class="d-inline-block text-truncate w-100" title="{{ client.name }}">
+                    {{ client.name }}
+                  </span>
               
               <!-- Edit mode -->
               <div *ngIf="isEditing(client.clientId)" class="w-100">
@@ -72,7 +86,7 @@
                   class="form-control form-control-sm w-100" 
                   [class.is-invalid]="editingErrors[client.clientId]"
                   [(ngModel)]="editingName[client.clientId]"
-                  maxlength="255"
+                  maxlength="50"
                   (keyup.enter)="saveEdit(client)"
                   (keyup.escape)="cancelEdit(client.clientId)"
                   (input)="validateEditingName(client.clientId)">
@@ -83,14 +97,15 @@
                 </div>
                 
                 <!-- Character count using Bootstrap text utilities -->
-                <div class="form-text" *ngIf="editingName[client.clientId] && editingName[client.clientId].length > 200">
-                  <span class="text-warning fw-medium">
-                    {{ editingName[client.clientId].length }}/255 characters
+                <div class="form-text" *ngIf="editingName[client.clientId] && editingName[client.clientId].length > 40">
+                                      <span class="text-warning fw-medium">
+                      {{ editingName[client.clientId].length }}/50 characters
                   </span>
+                  </div>
                 </div>
               </div>
             </td>
-            <td class="text-nowrap">
+            <td class="text-nowrap" *ngIf="roleService.canCreate() | async">
               <!-- View mode buttons -->
               <div class="d-flex gap-1" *ngIf="!isEditing(client.clientId)">
                 <button class="btn btn-outline-primary btn-sm" (click)="startEdit(client)">
@@ -117,6 +132,16 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination Component -->
+    <div class="d-flex justify-content-center mt-4" *ngIf="!(loading$ | async)">
+      <app-pagination
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [totalItems]="totalItems"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
     </div>
   </div>
 

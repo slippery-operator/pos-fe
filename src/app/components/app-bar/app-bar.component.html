@@ -1,51 +1,101 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm py-2">
   <div class="container-fluid">
     <!-- Brand/Logo -->
     <a class="navbar-brand d-flex align-items-center" routerLink="/">
-      <img src="logo.png" alt="Logo" width="170" height="50" class="me-2">
-     
+      <img src="logo.png" alt="Logo" width="120" height="35" class="me-2">
     </a>
     
-    <!-- Mobile Toggle Button -->
+    <!-- Mobile Toggle Button - Only show if not on auth page -->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"
+            *ngIf="!isAuthPage">
       <span class="navbar-toggler-icon"></span>
     </button>
     
-    <!-- Navigation Links -->
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
+    <!-- Navigation Links - Only show if not on auth page -->
+    <div class="collapse navbar-collapse" id="navbarNav" *ngIf="!isAuthPage">
+      <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center" routerLink="/cms" routerLinkActive="active">
+          <a class="nav-link d-flex align-items-center py-2" routerLink="/cms" routerLinkActive="active">
             <i class="bi bi-people me-1"></i>
             <span class="d-none d-md-inline">Client</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center" routerLink="/products" routerLinkActive="active">
+          <a class="nav-link d-flex align-items-center py-2" routerLink="/products" routerLinkActive="active">
             <i class="bi bi-box-seam me-1"></i>
             <span class="d-none d-md-inline">Product</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center" routerLink="/inventory" routerLinkActive="active">
+          <a class="nav-link d-flex align-items-center py-2" routerLink="/inventory" routerLinkActive="active">
             <i class="bi bi-box-seam me-1"></i>
             <span class="d-none d-md-inline">Inventory</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center" routerLink="/orders" routerLinkActive="active">
+          <a class="nav-link d-flex align-items-center py-2" routerLink="/orders" routerLinkActive="active">
             <i class="bi bi-cart me-1"></i> 
             <span class="d-none d-md-inline">Orders</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center" routerLink="/reports" routerLinkActive="active">
+          <a class="nav-link d-flex align-items-center py-2" routerLink="/reports" routerLinkActive="active">
             <i class="bi bi-file-earmark-bar-graph me-1"></i>
             <span class="d-none d-md-inline">Reports</span>
           </a>
         </li>
       </ul>
+      
+      <!-- User Info and Logout -->
+      <div class="d-flex align-items-center " *ngIf="currentUser">
+        <!-- User Avatar and Info -->
+        <div class="dropdown">
+          <button class="btn btn-light dropdown-toggle d-flex align-items-center border-0 shadow-none py-1" 
+                  type="button" 
+                  id="userDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false">
+            <!-- User Avatar -->
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                 style="width: 28px; height: 28px; font-size: 0.75rem; font-weight: 600;">
+              {{ getUserInitials() }}
+            </div>
+            <!-- User Name and Role (hidden on mobile) -->
+            <div class="d-none d-md-block text-start">
+              <!-- <div class="small fw-semibold text-dark">{{ currentUser.name }}</div> -->
+              <div class="text-muted" style="font-size: 0.7rem;">
+                <span class="badge bg-{{ getRoleBadgeColor() }} rounded-pill">{{ currentUser.role }}</span>
+              </div>
+            </div>
+          </button>
+          
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="userDropdown">
+            <li>
+              <div class="dropdown-item-text">
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                       style="width: 40px; height: 40px; font-weight: 600;">
+                    {{ getUserInitials() }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold">{{ currentUser.name }}</div>
+                    <div class="text-muted small">{{ currentUser.email }}</div>
+                    <!-- <span class="badge bg-{{ getRoleBadgeColor() }} rounded-pill small">{{ currentUser.role }}</span> -->
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <button class="dropdown-item d-flex align-items-center text-danger" (click)="onLogout()">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                Sign Out
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </nav>

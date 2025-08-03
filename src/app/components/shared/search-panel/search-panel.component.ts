@@ -13,6 +13,7 @@ export interface SearchField {
   required?: boolean;
   max?: string;
   min?: string;
+  value?: string; // Default value for the field
 }
 
 /**
@@ -48,7 +49,7 @@ export class SearchPanelComponent implements OnInit {
   ngOnInit() {
     // Initialize search values for all fields
     this.searchFields.forEach(field => {
-      this.searchValues[field.key] = '';
+      this.searchValues[field.key] = field.value || '';
     });
   }
 
@@ -75,8 +76,8 @@ export class SearchPanelComponent implements OnInit {
    * Resets all search values and emits clear event
    */
   onClear(): void {
-    Object.keys(this.searchValues).forEach(key => {
-      this.searchValues[key] = '';
+    this.searchFields.forEach(field => {
+      this.searchValues[field.key] = field.value || '';
     });
     this.clear.emit();
   }
@@ -89,6 +90,48 @@ export class SearchPanelComponent implements OnInit {
     if (event.key === 'Enter') {
       this.onSearch();
     }
+  }
+
+  /**
+   * Handles model change for date fields to update constraints dynamically
+   * @param fieldKey - The key of the field that changed
+   * @param value - The new value
+   */
+  onModelChange(fieldKey: string, value: string): void {
+    this.searchValues[fieldKey] = value;
+    
+    // Update date constraints dynamically
+    if (fieldKey === 'startDate' || fieldKey === 'endDate') {
+      this.updateDateConstraints();
+    }
+  }
+
+  /**
+   * Updates date field constraints based on current values
+   */
+  private updateDateConstraints(): void {
+    const startDateValue = this.searchValues['startDate'];
+    const endDateValue = this.searchValues['endDate'];
+    
+    // Update constraints for both date fields
+    this.searchFields.forEach(field => {
+      if (field.key === 'startDate') {
+        // Preserve original max constraint (e.g., today's date)
+        const originalMax = field.max;
+        
+        if (endDateValue) {
+          // Start date cannot be later than end date, but also respect original max
+          const effectiveMax = originalMax && endDateValue > originalMax ? originalMax : endDateValue;
+          field.max = effectiveMax;
+        }
+      } else if (field.key === 'endDate') {
+        // Preserve original max constraint (e.g., today's date)
+        // End date min constraint: cannot be earlier than start date
+        if (startDateValue) {
+          field.min = startDateValue;
+        }
+      }
+    });
   }
 
   /**

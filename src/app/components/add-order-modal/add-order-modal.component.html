@@ -28,25 +28,47 @@
           <table class="table table-borderless">
             <thead class="table-light">
               <tr>
-                <th scope="col" style="width: 40%">Barcode</th>
-                <th scope="col" style="width: 25%">Quantity</th>
-                <th scope="col" style="width: 25%">MRP (₹)</th>
-                <th scope="col" style="width: 10%">Actions</th>
+                <th scope="col" class="col-5">Barcode</th>
+                <th scope="col" class="col-2">Quantity</th>
+                <th scope="col" class="col-3">MRP (₹)</th>
+                <th scope="col" class="col-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of orderItems; let i = index" class="align-middle">
                 <!-- Barcode Field -->
                 <td>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-sm" 
-                    [class.is-invalid]="hasFieldError('barcode', i)"
-                    [(ngModel)]="item.barcode"
-                    placeholder="Enter barcode"
-                    (input)="validateField('barcode', i)"
-                    (keyup.enter)="onSubmit()"
-                    (keyup.escape)="closeModal()">
+                  <div class="input-group">
+                    <input 
+                      type="text" 
+                      class="form-control form-control-sm" 
+                      [class.is-invalid]="hasFieldError('barcode', i) || isBarcodeInvalid(i)"
+                      [class.is-valid]="isBarcodeValid(i)"
+                      [(ngModel)]="item.barcode"
+                      placeholder="Enter barcode"
+                      maxlength="50"
+                      (blur)="onBarcodeBlur(i)"
+                      (input)="onBarcodeInput(i)"
+                      (keyup.enter)="onSubmit()"
+                      (keyup.escape)="closeModal()">
+                    
+                    <span class="input-group-text" *ngIf="isBarcodeChecking(i)">
+                      <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Validating...</span>
+                      </div>
+                    </span>
+                    
+                    <span class="input-group-text text-success" *ngIf="isBarcodeValid(i)">
+                      <i class="bi bi-check-circle"></i>
+                    </span>
+                    
+                    <span class="input-group-text text-danger" *ngIf="isBarcodeInvalid(i)">
+                      <i class="bi bi-x-circle" 
+                         style="cursor: pointer;" 
+                         (click)="clearBarcodeField(i)"
+                         title="Clear barcode field"></i>
+                    </span>
+                  </div>
                   
                   <div class="invalid-feedback" *ngIf="hasFieldError('barcode', i)">
                     {{ getFieldError('barcode', i) }}
@@ -56,13 +78,13 @@
                 <!-- Quantity Field -->
                 <td>
                   <input 
-                    type="number" 
+                    type="text" 
                     class="form-control form-control-sm" 
                     [class.is-invalid]="hasFieldError('quantity', i)"
                     [(ngModel)]="item.quantity"
-                    min="1"
                     placeholder="Qty"
                     (input)="validateField('quantity', i)"
+                    (keydown)="onQuantityKeyDown($event)"
                     (keyup.enter)="onSubmit()"
                     (keyup.escape)="closeModal()">
                   
@@ -74,14 +96,13 @@
                 <!-- MRP Field -->
                 <td>
                   <input 
-                    type="number" 
+                    type="text" 
                     class="form-control form-control-sm" 
                     [class.is-invalid]="hasFieldError('mrp', i)"
                     [(ngModel)]="item.mrp"
-                    min="0.01"
-                    step="0.01"
                     placeholder="MRP"
                     (input)="validateField('mrp', i)"
+                    (keydown)="onNumberKeyDown($event)"
                     (keyup.enter)="onSubmit()"
                     (keyup.escape)="closeModal()">
                   
@@ -112,7 +133,8 @@
             <button 
               type="button" 
               class="btn btn-outline-primary btn-sm"
-              (click)="addOrderItem()">
+              (click)="addOrderItem()"
+              title="Add another item">
               <i class="bi bi-plus-circle me-1"></i>
               Add Another Item
             </button>

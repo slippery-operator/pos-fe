@@ -28,7 +28,7 @@ export class AddClientModalComponent {
    */
   isValidName(): boolean {
     const trimmedName = this.clientName.trim();
-    return trimmedName.length > 0 && trimmedName.length <= 255;
+    return trimmedName.length > 0 && trimmedName.length <= 50;
   }
 
   /**
@@ -40,9 +40,9 @@ export class AddClientModalComponent {
     if (trimmedName.length === 0) {
       this.showError = true;
       this.errorMessage = 'Client name cannot be empty';
-    } else if (trimmedName.length > 255) {
+    } else if (trimmedName.length > 50) {
       this.showError = true;
-      this.errorMessage = 'Client name cannot exceed 255 characters';
+      this.errorMessage = 'Client name cannot exceed 50 characters';
     } else {
       this.showError = false;
       this.errorMessage = '';

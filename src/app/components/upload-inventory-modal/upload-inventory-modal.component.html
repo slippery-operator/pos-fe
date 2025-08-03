@@ -23,14 +23,9 @@
                   <input 
                     type="file" 
                     class="form-control" 
-                    [class.is-invalid]="showError"
                     id="inventoryFile" 
                     accept=".tsv,.txt"
-                    (change)="onFileSelected($event)"
-                    [disabled]="uploading">
-                  <div class="invalid-feedback" *ngIf="showError">
-                    {{ errorMessage }}
-                  </div>
+                    (change)="onFileSelected($event)">
                   <div class="form-text">
                     Upload a TSV file containing inventory data. The file should have columns for product ID and quantity.
                   </div>
@@ -57,22 +52,16 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-danger btn-sm" (click)="closeModal()" [disabled]="uploading">
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="closeModal()">
           Cancel
         </button>
         <button 
           type="button" 
           class="btn btn-primary btn-sm"
           (click)="uploadFile()" 
-          [disabled]="!selectedFile || uploading">
-          <span *ngIf="!uploading">
-            <i class="bi bi-upload me-2"></i>
-            Upload
-          </span>
-          <span *ngIf="uploading">
-            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            Uploading...
-          </span>
+          [disabled]="!selectedFile">
+          <i class="bi bi-upload me-2"></i>
+          Upload
         </button>
       </div>
     </div>

@@ -42,7 +42,7 @@ export class ViewOrderItemsModalComponent implements OnInit, OnDestroy {
    * Loads all products for mapping product names
    */
   loadProducts() {
-    this.productService.searchProducts({})
+    this.productService.getAllProducts()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (products: Product[]) => {

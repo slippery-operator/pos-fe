@@ -5,6 +5,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { ProductRequest } from '../../models/product.model';
 import { Client } from '../../models/client.model';
 import { ClientService } from '../../services/client.service';
+import { ProductService } from '../../services/product.service';
+import { ToastService } from '../../services/toast.service';
 
 /**
  * Modal component for adding new products
@@ -21,7 +23,7 @@ export class AddProductModalComponent implements OnInit, OnDestroy {
   @Input() show = false;
   @Output() showChange = new EventEmitter<boolean>();
   @Output() productAdded = new EventEmitter<ProductRequest>();
-  @Output() productsUploaded = new EventEmitter<File>();
+  @Output() productsUploaded = new EventEmitter<void>();
 
   // Tab management
   activeTab: 'single' | 'bulk' = 'single';
@@ -47,7 +49,11 @@ export class AddProductModalComponent implements OnInit, OnDestroy {
   // Component destruction subject for cleanup
   private destroy$ = new Subject<void>();
 
-  constructor(private clientService: ClientService) {}
+  constructor(
+    private clientService: ClientService,
+    private productService: ProductService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit() {
     this.loadClients();
@@ -62,7 +68,7 @@ export class AddProductModalComponent implements OnInit, OnDestroy {
    * Loads all clients for the dropdown
    */
   loadClients() {
-    this.clientService.getClients()
+    this.clientService.getAllClients()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (clients: Client[]) => {
@@ -174,8 +180,27 @@ export class AddProductModalComponent implements OnInit, OnDestroy {
    */
   onSubmitBulk() {
     if (this.validateBulkForm() && this.selectedFile) {
-      this.productsUploaded.emit(this.selectedFile);
-      this.closeModal();
+      // Use the product service to upload and handle TSV response
+      this.productService.uploadProductsTsv(this.selectedFile)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.status === 'success') {
+              this.toastService.showSuccess('Products upload successful!');
+              this.productsUploaded.emit();
+              this.closeModal();
+            } else if (response.status === 'error') {
+              this.toastService.showError('There were problems in file uploaded. Please check response file for more details');
+              // The service already handles downloading the error file
+              // Don't close modal so user can try again
+            }
+          },
+          error: (error: any) => {
+            // This handles other types of errors (network, server errors, etc.)
+            this.toastService.showError(error.message || 'Failed to upload products file. Please try again.');
+            console.error('Upload error:', error);
+          }
+        });
     }
   }
 
@@ -295,6 +320,8 @@ export class AddProductModalComponent implements OnInit, OnDestroy {
     
     if (trimmedBarcode.length === 0) {
       this.fieldErrors['barcode'] = 'Barcode cannot be empty';
+    } else if (trimmedBarcode.length > 50) {
+      this.fieldErrors['barcode'] = 'Barcode cannot exceed 50 characters';
     } else {
       this.clearFieldError('barcode');
     }
@@ -319,8 +346,8 @@ export class AddProductModalComponent implements OnInit, OnDestroy {
     
     if (trimmedName.length === 0) {
       this.fieldErrors['name'] = 'Product name cannot be empty';
-    } else if (trimmedName.length > 255) {
-      this.fieldErrors['name'] = 'Product name cannot exceed 255 characters';
+    } else if (trimmedName.length > 50) {
+      this.fieldErrors['name'] = 'Product name cannot exceed 50 characters';
     } else {
       this.clearFieldError('name');
     }
@@ -330,11 +357,62 @@ export class AddProductModalComponent implements OnInit, OnDestroy {
    * Validates the MRP field and sets error state
    */
   validateMrp(): void {
-    if (!this.mrp || this.mrp <= 0) {
+    if (!this.mrp || this.mrp <= 0 || !this.isValidNumber(this.mrp.toString())) {
       this.fieldErrors['mrp'] = 'MRP must be a positive number';
+    } else if (this.mrp > 999999) {
+      this.fieldErrors['mrp'] = 'MRP cannot exceed 999,999';
     } else {
       this.clearFieldError('mrp');
     }
+  }
+
+  /**
+   * Handles keydown events for number inputs to prevent invalid characters
+   * @param event - Keyboard event
+   */
+  onNumberKeyDown(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+    const key = event.key;
+    
+    // Allow control keys
+    if (allowedKeys.includes(key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+    
+    // Allow digits and decimal point
+    if (!/[0-9.]/.test(key)) {
+      event.preventDefault();
+      return;
+    }
+    
+    // Prevent multiple decimal points
+    const input = event.target as HTMLInputElement;
+    if (key === '.' && input.value.includes('.')) {
+      event.preventDefault();
+      return;
+    }
+    
+    // Prevent scientific notation (e, E, +, -)
+    if (['e', 'E', '+', '-'].includes(key)) {
+      event.preventDefault();
+      return;
+    }
+  }
+
+  /**
+   * Validates if a string represents a valid number without scientific notation
+   * @param value - String to validate
+   * @returns boolean indicating if the value is a valid number
+   */
+  private isValidNumber(value: string): boolean {
+    if (!value || value.trim() === '') return false;
+    
+    // Check for scientific notation
+    if (/[eE]/.test(value)) return false;
+    
+    // Check if it's a valid number
+    const num = parseFloat(value);
+    return !isNaN(num) && isFinite(num);
   }
 
   /**

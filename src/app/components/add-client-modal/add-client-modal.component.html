@@ -18,7 +18,7 @@
             [(ngModel)]="clientName"
             (input)="validateName()" 
             (keydown)="onKeyPress($event)"
-            maxlength="255"
+            maxlength="50"
             placeholder="Enter client name">
           
           <!-- Bootstrap Invalid Feedback -->
@@ -27,9 +27,9 @@
           </div>
           
           <!-- Character count warning using Bootstrap text classes -->
-          <div class="form-text" *ngIf="clientName.length > 200 && clientName.length <= 255">
+          <div class="form-text" *ngIf="clientName.length > 40 && clientName.length <= 50">
             <span class="text-warning fw-medium">
-              {{ clientName.length }}/255 characters
+              {{ clientName.length }}/50 characters
             </span>
           </div>
         </div>

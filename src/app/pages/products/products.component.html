@@ -1,13 +1,21 @@
 <div class="container-fluid px-4 px-lg-5 py-4 py-lg-5">
-  <div class="row d-flex align-items-center mb-3">
-    <div class="col-9 col-md-9 d-flex justify-content-start">
-      <h2 class="fs-4 mb-0">Product Management System</h2>
-    </div>
-    <div class="col col-md-3 d-flex justify-content-start justify-content-md-end fs-4 mt-3 mt-md-0">
-      <button class="btn btn-primary btn-sm w-md-auto" (click)="showModal = true">
-        <i class="bi bi-plus-circle me-2"></i>
-        Add Products
-      </button>
+  <div class="page-header">
+    <div class="row">
+      <div class="col-12 col-md-8">
+        <h2>Product Management System</h2>
+      </div>
+      <div class="col-12 col-md-4" *ngIf="roleService.canCreate() | async">
+        <div class="btn-container">
+          <!-- Only supervisors can add products -->
+          <button 
+            class="btn btn-primary btn-sm" 
+            (click)="showModal = true"
+            [disabled]="(loading$ | async) || addButtonDisabled">
+            <i class="bi bi-plus-circle me-2"></i>
+            Add Products
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -21,15 +29,31 @@
     (clear)="onClearSearch()">
   </app-search-panel>
 
- 
+  <!-- Client Filter -->
+  <div class="row mt-3">
+    <div class="col-12 col-md-4">
+      <div class="form-group">
+        <label for="clientFilter" class="form-label fw-semibold">
+          Filter by Client
+          <!-- <span *ngIf="selectedClientId !== null" class="badge bg-primary ms-2">Active</span> -->
+        </label>
+        <div class="d-flex gap-2">
+          <select 
+            id="clientFilter" 
+            class="form-select form-select-sm" 
+            [(ngModel)]="selectedClientId" 
+            (ngModelChange)="onClientFilterChange()">
+            
+            <option [ngValue]="null">All Clients</option>
+            <option *ngFor="let client of clients" [ngValue]="client.clientId">
+              {{ client.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Error Display Component -->
-  <app-error-display 
-    [showError]="(error$ | async) ? true : false"
-    [errorMessage]="(error$ | async) || ''"
-    [showRetryButton]="true"
-    (onRetry)="retryLoadProducts()">
-  </app-error-display>
 
   <!-- Loading Spinner -->
   <div *ngIf="loading$ | async" class="text-center py-5">
@@ -54,41 +78,41 @@
       <table class="table table-hover table-borderless text-start">
         <thead class="table-primary">
           <tr>
-            <th scope="col" style="width: 15%" class="ps-4">Barcode</th>
-            <th scope="col" style="width: 20%">Client</th>
-            <th scope="col" style="width: 30%">Name</th>
-            <th scope="col" style="width: 10%">MRP</th>
-            <!-- <th scope="col" style="width: 10%">Image</th> -->
-            <th scope="col" style="width: 20%">Actions</th>
+            <th scope="col" [class]="(roleService.canCreate() | async) ? 'col-2' : 'col-3'" class="ps-4">Barcode</th>
+            <th scope="col" [class]="(roleService.canCreate() | async) ? 'col-2' : 'col-3'">Client</th>
+            <th scope="col" [class]="(roleService.canCreate() | async) ? 'col-4' : 'col-5'">Name</th>
+            <th scope="col" [class]="(roleService.canCreate() | async) ? 'col-1' : 'col-1'">MRP</th>
+            <!-- <th scope="col" class="col-1">Image</th> -->
+            <th scope="col" class="col-3" *ngIf="roleService.canCreate() | async">Actions</th>
           </tr>
         </thead>
         <tbody class="border-top">
           <tr *ngFor="let product of products" class="align-middle">
             <td class="ps-4">
-              <span class="">{{ product.barcode }}</span>
+              <span class="text-truncate d-inline-block" style="max-width: 120px;" title="{{ product.barcode }}">{{ product.barcode }}</span>
             </td>
             <td>
-              <span class="badge rounded-pill text-bg-primary">{{ getClientName(product.clientId) }}</span>
+              <span class="badge rounded-pill text-bg-primary text-truncate d-inline-block" style="max-width: 120px;" title="{{ getClientName(product.clientId) }}">{{ getClientName(product.clientId) }}</span>
             </td>
             <td>
               <!-- Display mode -->
-              <span *ngIf="!isEditing(product.id)">{{ product.name }}</span>
+              <span *ngIf="!isEditing(product.id)" class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ product.name }}">{{ product.name }}</span>
               
               <!-- Edit mode -->
               <div *ngIf="isEditing(product.id)" class="w-100">
                 <input 
                   type="text" 
                   class="form-control form-control-sm w-100" 
-                  [class.is-invalid]="editingErrors[product.id]"
+                  [class.is-invalid]="editingNameErrors[product.id]"
                   [(ngModel)]="editingName[product.id]"
-                  maxlength="255"
+                  maxlength="50"
                   (keyup.enter)="saveEdit(product)"
                   (keyup.escape)="cancelEdit(product.id)"
                   (input)="validateEditingData(product.id)">
                 
                 <!-- Bootstrap validation feedback -->
-                <div class="invalid-feedback" *ngIf="editingErrors[product.id]">
-                  {{ editingErrors[product.id] }}
+                <div class="invalid-feedback" *ngIf="editingNameErrors[product.id]">
+                  {{ editingNameErrors[product.id] }}
                 </div>
               </div>
             </td>
@@ -101,11 +125,17 @@
                 <input 
                   type="text" 
                   class="form-control form-control-sm w-100" 
-                  [class.is-invalid]="editingErrors[product.id]"
+                  [class.is-invalid]="editingMrpErrors[product.id]"
                   [(ngModel)]="editingMrp[product.id]"
                   (keyup.enter)="saveEdit(product)"
                   (keyup.escape)="cancelEdit(product.id)"
-                  (input)="validateEditingData(product.id)">
+                  (input)="validateEditingData(product.id)"
+                  (keydown)="onNumberKeyDown($event)">
+                
+                <!-- Bootstrap validation feedback -->
+                <div class="invalid-feedback" *ngIf="editingMrpErrors[product.id]">
+                  {{ editingMrpErrors[product.id] }}
+                </div>
               </div>
             </td>
             <!-- <td>
@@ -120,7 +150,7 @@
                 <span class="text-muted small">No image</span>
               </ng-template>
             </td> -->
-            <td class="text-nowrap">
+            <td class="text-nowrap" *ngIf="roleService.canCreate() | async">
               <!-- View mode buttons -->
               <div class="d-flex gap-1" *ngIf="!isEditing(product.id)">
                 <button class="btn btn-outline-primary btn-sm" (click)="startEdit(product)">
@@ -148,12 +178,22 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination Component -->
+    <div class="d-flex justify-content-center mt-4" *ngIf="!(loading$ | async)">
+      <app-pagination
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [totalItems]="totalItems"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    </div>
   </div>
 
   <!-- Modal component -->
   <add-product-modal 
     [(show)]="showModal" 
     (productAdded)="onProductAdded($event)"
-    (productsUploaded)="onProductsUploaded($event)">
+    (productsUploaded)="onProductsUploaded()">
   </add-product-modal>
 </div> 

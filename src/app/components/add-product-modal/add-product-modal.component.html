@@ -1,7 +1,8 @@
 <!-- Bootstrap 5 Modal -->
 <div class="modal fade" [class.show]="show" [style.display]="show ? 'block' : 'none'" 
-     tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel" [attr.aria-hidden]="show ? 'false' : 'true'">
-  <div class="modal-dialog modal modal-dialog-centered" role="document">
+     tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel" [attr.aria-hidden]="show ? 'false' : 'true'"
+     style="overflow-y: auto;">
+  <div class="modal-dialog modal modal-dialog-centered" role="document" style="position: relative; z-index: 1055;">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addProductModalLabel">Add Products</h5>
@@ -44,6 +45,7 @@
                 [(ngModel)]="barcode"
                 (input)="validateBarcode()"
                 (keydown)="onKeyPress($event)"
+                maxlength="50"
                 placeholder="Enter product barcode">
               <div class="invalid-feedback" *ngIf="hasFieldError('barcode')">
                 {{ getFieldError('barcode') }}
@@ -64,7 +66,7 @@
                   (click)="toggleClientDropdown()">
                   {{ getSelectedClientName() || 'Select a client' }}
                 </button>
-                <ul class="dropdown-menu w-100">
+                <ul class="dropdown-menu w-100" style="max-height: 200px; overflow-y: auto; position: absolute; z-index: 1060;">
                   <li *ngFor="let client of clients">
                     <a class="dropdown-item" 
                        href="#" 
@@ -91,16 +93,16 @@
                 [(ngModel)]="productName"
                 (input)="validateProductName()"
                 (keydown)="onKeyPress($event)"
-                maxlength="255"
+                maxlength="50"
                 placeholder="Enter product name">
               <div class="invalid-feedback" *ngIf="hasFieldError('name')">
                 {{ getFieldError('name') }}
               </div>
               
               <!-- Character count warning using Bootstrap text classes -->
-              <div class="form-text" *ngIf="productName.length > 200 && productName.length <= 255">
+              <div class="form-text" *ngIf="productName.length > 40 && productName.length <= 50">
                 <span class="text-warning fw-medium">
-                  {{ productName.length }}/255 characters
+                  {{ productName.length }}/50 characters
                 </span>
               </div>
             </div>
@@ -115,6 +117,7 @@
                 id="mrp" 
                 [(ngModel)]="mrp"
                 (input)="validateMrp()"
+                (keydown)="onNumberKeyDown($event)"
                 (keydown)="onKeyPress($event)"
                 placeholder="Enter MRP">
               <div class="invalid-feedback" *ngIf="hasFieldError('mrp')">
@@ -124,7 +127,7 @@
 
             <!-- Image URL Field -->
             <div class="col-12">
-              <label for="imageUrl" class="form-label fw-semibold">Image URL (Optional)</label>
+              <label for="imageUrl" class="form-label fw-semibold">Image URL</label>
               <input 
                 type="url" 
                 class="form-control" 

@@ -1,5 +1,5 @@
 export interface DaySalesResponse {
-    date: string;
+    date: string | number; // Unix timestamp from backend (ZonedDateTime serialized as timestamp)
     invoicedOrdersCount: number;
     invoicedItemsCount: number;
     totalRevenue: number;
